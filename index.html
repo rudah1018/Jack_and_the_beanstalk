@@ -1026,6 +1026,7 @@
             const currentLand = getCurrentLandData();
             const landInfo = getLandInfo(gameState.currentLandIndex);
             const heightLevel = getBeanstalkHeight(currentLand);
+            const isHeaven = (currentLand.id === 6);
 
             const maxLevel = 80;
             const progressRatio = Math.min(1.0, (heightLevel - 1) / (maxLevel - 1));
@@ -1058,14 +1059,26 @@
                     topSegThickness = segThickness;
                 }
 
-                ctx.fillStyle = (i % 2 === 0) ? '#15803d' : '#166534';
+                let mainColor = (i % 2 === 0) ? '#15803d' : '#166534';
+                let edgeLight = '#22c55e';
+                let edgeDark = '#052e16';
+                let leafColor = '#22c55e';
+
+                if (isHeaven) {
+                    mainColor = (i % 2 === 0) ? '#eab308' : '#ca8a04';
+                    edgeLight = '#fef08a';
+                    edgeDark = '#854d0e';
+                    leafColor = '#fef08a';
+                }
+
+                ctx.fillStyle = mainColor;
                 ctx.fillRect(segCenterX - Math.floor(segThickness / 2), segY - segmentHeight, segThickness, segmentHeight + 1);
 
                 const edgeWidth = Math.max(3, Math.floor(segThickness * 0.12));
-                ctx.fillStyle = '#22c55e';
+                ctx.fillStyle = edgeLight;
                 ctx.fillRect(segCenterX - Math.floor(segThickness / 2) + 2, segY - segmentHeight, edgeWidth, segmentHeight + 1);
 
-                ctx.fillStyle = '#052e16';
+                ctx.fillStyle = edgeDark;
                 ctx.fillRect(segCenterX + Math.floor(segThickness / 2) - edgeWidth, segY - segmentHeight, edgeWidth, segmentHeight + 1);
 
                 if (i > 0 && i % 4 === 0) {
@@ -1073,13 +1086,13 @@
                     const leafWidth = Math.min(40, Math.max(10, Math.floor(segThickness * 0.4)));
                     const leafX = isLeft ? segCenterX - Math.floor(segThickness / 2) - leafWidth : segCenterX + Math.floor(segThickness / 2);
                     
-                    ctx.fillStyle = '#22c55e';
+                    ctx.fillStyle = leafColor;
                     ctx.fillRect(leafX, segY - 8, leafWidth, 8);
                 }
             }
 
             if (targetPixelHeight < maxPixelHeight && Number.isFinite(topY) && Number.isFinite(topSegThickness)) {
-                drawCurvedConeTip(ctx, topCenterX, topY, topSegThickness, segments, w, progressRatio);
+                drawCurvedConeTip(ctx, topCenterX, topY, topSegThickness, segments, w, progressRatio, isHeaven);
             }
 
             ctx.fillStyle = '#ffffff';
@@ -1088,12 +1101,11 @@
             ctx.shadowColor = '#000000';
             ctx.shadowBlur = 4;
             const hudY = (targetPixelHeight < maxPixelHeight && Number.isFinite(topY)) ? Math.max(40, topY - 30) : 80;
-            ctx.fillText(`[${landInfo.name} 콩나무 높이: ${heightLevel}m]`, centerX, hudY);
-
+            ctx.fillText(`${heightLevel}m`, centerX, hudY);
             ctx.restore();
         }
 
-        function drawCurvedConeTip(ctx, startX, startY, baseThickness, startSegmentIndex, w, progressRatio) {
+        function drawCurvedConeTip(ctx, startX, startY, baseThickness, startSegmentIndex, w, progressRatio, isHeaven) {
             ctx.save();
             const tipSteps = Math.max(10, Math.floor(baseThickness * 0.8));
             const stepHeight = 3;
@@ -1106,7 +1118,12 @@
                 const segY = Math.floor(startY - (step * stepHeight));
                 const currentThickness = Math.max(2, Math.floor(baseThickness * Math.pow(1 - t, 1.3)));
 
-                ctx.fillStyle = (step % 2 === 0) ? '#15803d' : '#22c55e';
+                if (isHeaven) {
+                    ctx.fillStyle = (step % 2 === 0) ? '#eab308' : '#fef08a';
+                } else {
+                    ctx.fillStyle = (step % 2 === 0) ? '#15803d' : '#22c55e';
+                }
+                
                 ctx.fillRect(segCenterX - Math.floor(currentThickness / 2), segY - stepHeight, currentThickness, stepHeight + 1);
             }
             ctx.restore();
@@ -1328,8 +1345,13 @@
             // Gacha Header Button Toggle
             const gachaHeaderBtn = document.getElementById('gacha-btn-header');
             if (gachaHeaderBtn) {
-                if (gameState.hasElevator) gachaHeaderBtn.classList.remove('hidden');
-                else gachaHeaderBtn.classList.add('hidden');
+                if (gameState.hasElevator) {
+                    gachaHeaderBtn.classList.remove('hidden');
+                    gachaHeaderBtn.style.display = 'flex';
+                } else {
+                    gachaHeaderBtn.classList.add('hidden');
+                    gachaHeaderBtn.style.display = 'none';
+                }
             }
 
             // Update Land Switcher Bar
@@ -1360,10 +1382,12 @@
             if (elevatorCard) {
                 if (gameState.currentLandIndex === 4 && land5Height >= 100 && !gameState.hasElevator) {
                     elevatorCard.classList.remove('hidden');
+                    elevatorCard.style.display = 'flex';
                     const buyEleBtn = document.getElementById('buy-elevator-btn');
                     if (buyEleBtn) buyEleBtn.disabled = gameState.gold < 5000000000;
                 } else {
                     elevatorCard.classList.add('hidden');
+                    elevatorCard.style.display = 'none';
                 }
             }
 
@@ -1479,8 +1503,11 @@
         function gameLoop() {
             try {
                 const now = Date.now();
-                const delta = (now - lastAutoTick) / 1000;
+                let delta = (now - lastAutoTick) / 1000;
                 
+                // 버그 수정: 탭 전환 등으로 인한 비정상적인 시간 건너뜀 방지 (돈 복사 버그 해결)
+                if (delta > 1.0) delta = 1.0;
+
                 if (delta >= 0.1) {
                     let earnedSomething = false;
                     // Collect background income for all unlocked lands
