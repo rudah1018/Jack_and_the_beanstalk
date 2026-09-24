@@ -218,7 +218,7 @@
                         </div>
                     </div>
                     <button id="buy-elevator-btn" onclick="buyElevator()" class="pixel-btn-gold px-4 py-2 text-xs rounded font-bold w-full sm:w-auto whitespace-nowrap">
-                        해방 (₩5.00B)
+                        해방 (₩1.50B)
                     </button>
                 </div>
 
@@ -522,11 +522,10 @@
             const id = landIndex + 1;
             if (landIndex === 0) return { id: 1, name: '땅 1', cost: 0, multiplier: 1.0 };
             if (landIndex === 5) {
-                return { id: 6, name: '천국', cost: 0, multiplier: 1200.0 }; // 천국 효율을 땅 5보다 확실히 높게 설정
+                return { id: 6, name: '천국', cost: 0, multiplier: 1200.0 };
             }
             
             const cost = Math.floor(4000 * Math.pow(30, landIndex - 1));
-            // 땅 4(index 3) 및 땅별 효율 대폭 상향 (땅 4: 95.0, 땅 5: 450.0, 천국: 1200.0)
             const multipliers = [1.0, 4.0, 18.0, 95.0, 450.0];
             const multiplier = multipliers[landIndex] || Math.max(1, parseFloat(Math.pow(6.5, landIndex).toFixed(1)));
             return {
@@ -586,7 +585,6 @@
                 if (!Number.isFinite(land.totalLandGold) || land.totalLandGold < 0) land.totalLandGold = 0;
             });
 
-            // Ensure elevator grants Heaven land
             if (gameState.hasElevator && gameState.lands.length < 6) {
                 const heavenLand = gameState.lands.find(l => l.id === 6);
                 if (!heavenLand) {
@@ -672,18 +670,7 @@
         function getSingleWorkerHarvestYield(land) {
             const landData = land || getCurrentLandData();
             const landInfo = getLandInfo(landData.id === 6 ? 5 : landData.id - 1);
-            // 기본 생산량 및 레벨당 효율 대폭 상향
             return Math.floor(Math.max(1, landData.workerYieldLevel * 3) * landInfo.multiplier);
-        }
-
-        function getLandGPS(land) {
-            const speedSec = Math.max(0.1, 1.0 - (land.workerSpeedLevel - 1) * 0.05);
-            const harvestsPerSec = 1 / speedSec;
-            return land.workerCount * getSingleWorkerHarvestYield(land) * harvestsPerSec;
-        }
-
-        function getGeeseGPS() {
-            return (gameState.gooseCount || 0) * 50000000; // 거위당 50M로 상향
         }
 
         function getLandGPS(land) {
@@ -693,7 +680,7 @@
         }
 
         function getGeeseGPS() {
-            return (gameState.gooseCount || 0) * 20000000; // 20M per goose per sec
+            return (gameState.gooseCount || 0) * 20000000;
         }
 
         function getTotalGoldPerSecond() {
@@ -749,27 +736,21 @@
                 ctx.save();
                 ctx.translate(Math.floor(this.x), Math.floor(groundY - 12));
 
-                // Golden Goose Shadow
                 ctx.fillStyle = 'rgba(0,0,0,0.3)';
                 ctx.fillRect(-6, 8, 12, 3);
 
-                // Body (Golden Yellow)
                 ctx.fillStyle = '#facc15';
                 ctx.fillRect(-6, -2, 12, 8);
 
-                // Wing
                 ctx.fillStyle = '#fef08a';
                 ctx.fillRect(-3, 0, 6, 4);
 
-                // Head/Neck
                 ctx.fillStyle = '#facc15';
                 ctx.fillRect(this.direction > 0 ? 3 : -7, -8, 4, 8);
 
-                // Orange Beak
                 ctx.fillStyle = '#f97316';
                 ctx.fillRect(this.direction > 0 ? 7 : -10, -7, 3, 2);
 
-                // Eye
                 ctx.fillStyle = '#000000';
                 ctx.fillRect(this.direction > 0 ? 5 : -5, -7, 1, 1);
 
@@ -1065,7 +1046,6 @@
                     topSegThickness = segThickness;
                 }
 
-                // 천국일 경우 확실하게 황금빛/빛나는 색상 적용
                 let mainColor = (i % 2 === 0) ? '#15803d' : '#166534';
                 let edgeLight = '#22c55e';
                 let edgeDark = '#052e16';
@@ -1181,14 +1161,13 @@
         }
 
         function buyElevator() {
-            const elevatorCost = 5000000000; // 5 Billion Gold
+            const elevatorCost = 1500000000; // 1.5 Billion Gold (1.5B)
             if (gameState.hasElevator) return;
             
             if (gameState.gold >= elevatorCost) {
                 gameState.gold -= elevatorCost;
                 gameState.hasElevator = true;
                 
-                // Add Heaven Land (Land 6) if not unlocked
                 if (!gameState.lands.find(l => l.id === 6)) {
                     gameState.lands.push({
                         id: 6,
@@ -1199,7 +1178,7 @@
                     });
                 }
                 
-                gameState.currentLandIndex = gameState.lands.length - 1; // Go to Heaven
+                gameState.currentLandIndex = gameState.lands.length - 1;
                 syncActiveWorkers();
                 playSound('upgrade');
                 openModal("천국 해방 성공!", "축하합니다! 드디어 천국을 해방했습니다!<br>천국에서는 수확 효율이 <b>1.5배(x615.1)</b>로 대폭 증가하며, 천국에서만 <b>황금알 거위 뽑기</b>를 이용할 수 있습니다!");
@@ -1237,7 +1216,6 @@
             let successCount = 0;
 
             for (let i = 0; i < times; i++) {
-                // 0.01% Probability = 0.0001
                 if (Math.random() < 0.0001) {
                     successCount++;
                 }
@@ -1348,7 +1326,6 @@
             document.getElementById('gold-display').innerText = `₩${formatNumber(gameState.gold)}`;
             document.getElementById('gps-display').innerText = `+₩${formatNumber(getTotalGoldPerSecond())}/초`;
 
-            // 천국(Land 6) 화면일 때만 거위 뽑기 버튼 노출 (상점 UI와 충돌 나지 않도록 구조 분리)
             const gachaHeaderBtn = document.getElementById('gacha-btn-header');
             if (gachaHeaderBtn) {
                 if (gameState.hasElevator && currentLand.id === 6) {
@@ -1376,10 +1353,8 @@
                 return;
             }
 
-            // Shop UI Updates
             document.getElementById('active-land-badge').innerText = `[${currentLandInfo.name} 관리 중]`;
 
-            // Check Elevator condition: In Land 5 AND Land 5 Beanstalk >= 100m AND Elevator NOT yet installed
             const land5 = gameState.lands.find(l => l.id === 5);
             const land5Height = land5 ? getBeanstalkHeight(land5) : 0;
             const elevatorCard = document.getElementById('elevator-shop-card');
@@ -1389,14 +1364,13 @@
                     elevatorCard.classList.remove('hidden');
                     elevatorCard.style.display = 'flex';
                     const buyEleBtn = document.getElementById('buy-elevator-btn');
-                    if (buyEleBtn) buyEleBtn.disabled = gameState.gold < 5000000000;
+                    if (buyEleBtn) buyEleBtn.disabled = gameState.gold < 1500000000;
                 } else {
                     elevatorCard.classList.add('hidden');
                     elevatorCard.style.display = 'none';
                 }
             }
 
-            // Next Land Purchase Info in Shop
             const buyLandCard = document.getElementById('buy-land-card');
             const nextLandIdx = gameState.lands.filter(l => l.id <= 5).length;
             const buyLandBtn = document.getElementById('buy-land-btn');
@@ -1418,7 +1392,6 @@
                 }
             }
 
-            // Worker Hire
             const wCost = getWorkerCost(currentLand);
             document.getElementById('worker-count').innerText = `${currentLand.workerCount} / 25명`;
             const buyWorkerBtn = document.getElementById('buy-worker-btn');
@@ -1431,7 +1404,6 @@
                 buyWorkerBtn.disabled = gameState.gold < wCost.cost;
             }
 
-            // Yield Upgrade
             const yieldCost = getYieldCost(currentLand);
             document.getElementById('yield-lvl').innerText = `Lv.${currentLand.workerYieldLevel}`;
             document.getElementById('yield-val').innerText = `₩${formatNumber(getSingleWorkerHarvestYield(currentLand))}`;
@@ -1440,7 +1412,6 @@
             const upgYieldBtn = document.getElementById('upg-yield-btn');
             if (upgYieldBtn) upgYieldBtn.disabled = gameState.gold < yieldCost.cost;
 
-            // Speed Upgrade
             const spdCost = getSpeedCost(currentLand);
             document.getElementById('spd-lvl').innerText = `Lv.${currentLand.workerSpeedLevel}${currentLand.workerSpeedLevel >= 18 ? ' (MAX)' : ''}`;
             document.getElementById('spd-val').innerText = `${Math.max(0.15, (1 - (currentLand.workerSpeedLevel - 1) * 0.05)).toFixed(2)}초`;
@@ -1479,7 +1450,6 @@
             }
             sanitizeGameState();
 
-            // Offline Rewards (up to 24h)
             if (timeDiffSec > 5) {
                 timeDiffSec = Math.min(timeDiffSec, 86400); 
                 const totalGPS = getTotalGoldPerSecond();
@@ -1503,27 +1473,28 @@
 
         setInterval(() => saveGame(), 10000);
 
-        let lastAutoTick = Date.now();
+        // Fix background tab / inactivity bug by tracking real elapsed time using performance.now() or Date.now() on each frame
+        let lastTimestamp = performance.now();
 
-        function gameLoop() {
+        function gameLoop(timestamp) {
             try {
-                const now = Date.now();
-                let delta = (now - lastAutoTick) / 1000;
-                
-                if (delta > 1.0) delta = 1.0;
+                const delta = (timestamp - lastTimestamp) / 1000;
+                lastTimestamp = timestamp;
 
-                if (delta >= 0.1) {
+                // Clamp delta to prevent huge jumps if tab was suspended for a brief moment
+                const safeDelta = Math.min(Math.max(0, delta), 1.0);
+
+                if (safeDelta > 0) {
                     gameState.lands.forEach(land => {
                         let landGps = getLandGPS(land);
                         if (land.id === 6) landGps += getGeeseGPS();
                         
-                        const earned = landGps * delta;
+                        const earned = landGps * safeDelta;
                         if (earned > 0) {
                             addGold(earned, land);
                         }
                     });
                     updateUI();
-                    lastAutoTick = now;
                 }
 
                 drawBackgroundAndClouds(ctx, canvas.width, canvas.height);
@@ -1558,7 +1529,8 @@
             loadGame();
             syncActiveWorkers();
             updateUI();
-            gameLoop();
+            lastTimestamp = performance.now();
+            requestAnimationFrame(gameLoop);
         };
     </script>
 </body>
