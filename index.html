@@ -522,7 +522,6 @@
             const id = landIndex + 1;
             if (landIndex === 0) return { id: 1, name: '땅 1', cost: 0, multiplier: 1.0 };
             if (landIndex === 5) {
-                // 천국 (땅 6): 땅 5(x410.1)의 1.5배 = x615.1배 수확 효율
                 return { id: 6, name: '천국', cost: 0, multiplier: 615.1 };
             }
             
@@ -536,7 +535,6 @@
             };
         }
 
-        // Global Game State (Multi-Land + Heaven + Elevator + Geese)
         const gameState = {
             gold: 10,
             totalGold: 10,
@@ -924,8 +922,6 @@
         function harvestFromWorker(x, y) {
             const currentLand = getCurrentLandData();
             const amount = getSingleWorkerHarvestYield(currentLand);
-            // 버그 수정: 일꾼 애니메이션에 의한 골드 중복 획득 제거 
-            // (실제 골드 획득은 gameLoop의 모든 땅 백그라운드 통합 정산으로 처리됩니다)
             spawnParticle(x, y, `+₩${formatNumber(amount)}`, '#4ade80');
             playSound('crunch');
         }
@@ -960,7 +956,6 @@
             const skyGrad = ctx.createLinearGradient(0, 0, 0, Math.max(1, groundY));
             
             if (isHeaven) {
-                // Golden Heavenly Sky
                 skyGrad.addColorStop(0, '#fef08a');
                 skyGrad.addColorStop(0.5, '#fde047');
                 skyGrad.addColorStop(1, '#eab308');
@@ -990,14 +985,13 @@
                 }
             }
 
-            ctx.fillStyle = isHeaven ? '#ffffff' : '#ffffff';
+            ctx.fillStyle = '#ffffff';
             clouds.forEach(cloud => {
                 cloud.x += cloud.speed;
                 if (cloud.x > w + 100) cloud.x = -120;
                 drawPixelCloud(ctx, cloud.x, cloud.y, cloud.size);
             });
 
-            // Ground & Grass
             ctx.fillStyle = isHeaven ? '#ca8a04' : '#78350f';
             ctx.fillRect(0, groundY, w, 52);
 
@@ -1338,24 +1332,21 @@
             const currentLand = getCurrentLandData();
             const currentLandInfo = getLandInfo(gameState.currentLandIndex);
 
-            // Update Header Stats
             document.getElementById('gold-display').innerText = `₩${formatNumber(gameState.gold)}`;
             document.getElementById('gps-display').innerText = `+₩${formatNumber(getTotalGoldPerSecond())}/초`;
 
-            // Gacha Header Button Toggle
+            // 천국(Land 6) 화면에 있을 때만 거위 뽑기 버튼 무조건 표시
             const gachaHeaderBtn = document.getElementById('gacha-btn-header');
             if (gachaHeaderBtn) {
-                // 천국(Land 6) 화면에 있을 때만 거위 뽑기 버튼 표시
                 if (gameState.hasElevator && currentLand.id === 6) {
                     gachaHeaderBtn.classList.remove('hidden');
-                    gachaHeaderBtn.style.display = ''; 
+                    gachaHeaderBtn.style.display = 'flex'; 
                 } else {
                     gachaHeaderBtn.classList.add('hidden');
-                    gachaHeaderBtn.style.display = ''; 
+                    gachaHeaderBtn.style.display = 'none'; 
                 }
             }
 
-            // Update Land Switcher Bar
             document.getElementById('current-land-title').innerText = `${currentLandInfo.name} (x${currentLandInfo.multiplier} 효율)`;
             
             let currentLandGPS = getLandGPS(currentLand);
@@ -1506,25 +1497,19 @@
                 const now = Date.now();
                 let delta = (now - lastAutoTick) / 1000;
                 
-                // 버그 수정: 탭 전환 등으로 인한 비정상적인 시간 건너뜀 방지 (돈 복사 버그 해결)
                 if (delta > 1.0) delta = 1.0;
 
                 if (delta >= 0.1) {
-                    let earnedSomething = false;
-                    // Collect background income for all unlocked lands
                     gameState.lands.forEach(land => {
                         let landGps = getLandGPS(land);
-                        if (land.id === 6) landGps += getGeeseGPS(); // Golden Geese Passive Income in Heaven
+                        if (land.id === 6) landGps += getGeeseGPS();
                         
                         const earned = landGps * delta;
                         if (earned > 0) {
                             addGold(earned, land);
-                            earnedSomething = true;
                         }
                     });
-                    if (earnedSomething) {
-                        updateUI();
-                    }
+                    updateUI();
                     lastAutoTick = now;
                 }
 
@@ -1533,7 +1518,6 @@
 
                 const currentLand = getCurrentLandData();
 
-                // Draw Golden Geese if in Heaven
                 if (currentLand.id === 6 && gameState.gooseCount > 0) {
                     syncGeese();
                     const groundY = canvas.height - 52;
@@ -1543,7 +1527,6 @@
                     });
                 }
 
-                // Draw Workers
                 activeWorkers.forEach(worker => {
                     worker.update(canvas.width, canvas.height);
                     worker.draw(ctx, canvas.height);
