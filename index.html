@@ -135,12 +135,18 @@
             </div>
 
             <!-- Action Controls & Shop Trigger -->
-            <div class="pointer-events-auto flex items-center gap-2">
-                <!-- Gacha Shop Button (Heaven Only) -->
-                <button id="gacha-btn-header" onclick="openGachaModal()" class="pixel-btn-gold px-3 py-2.5 rounded text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-lg hidden">
-                    <i class="fa-solid fa-egg text-base"></i>
-                    <span>거위 뽑기</span>
-                </button>
+    <div class="pointer-events-auto flex items-center gap-2">
+        <!-- Gacha Shop Button (Heaven Only) - Always rendered when in heaven -->
+        <button id="gacha-btn-header" onclick="openGachaModal()" class="pixel-btn-gold px-3 py-2.5 rounded text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-lg">
+            <i class="fa-solid fa-egg text-base"></i>
+            <span>거위 뽑기</span>
+        </button>
+
+        <!-- Open Shop Button -->
+        <button onclick="openShop()" class="pixel-btn-white px-4 py-2.5 rounded text-xs sm:text-sm font-black flex items-center gap-2 shadow-lg">
+            <i class="fa-solid fa-store text-base"></i>
+            <span>상점 (땅 & 강화)</span>
+        </button>
 
                 <!-- Open Shop Button -->
                 <button onclick="openShop()" class="pixel-btn-white px-4 py-2.5 rounded text-xs sm:text-sm font-black flex items-center gap-2 shadow-lg">
@@ -522,11 +528,11 @@
             const id = landIndex + 1;
             if (landIndex === 0) return { id: 1, name: '땅 1', cost: 0, multiplier: 1.0 };
             if (landIndex === 5) {
-                return { id: 6, name: '천국', cost: 0, multiplier: 615.1 };
+                return { id: 6, name: '천국', cost: 0, multiplier: 850.0 }; // 상향된 천국 효율
             }
             
-            const cost = Math.floor(5000 * Math.pow(40, landIndex - 1));
-            const multiplier = Math.max(1, parseFloat(Math.pow(4.5, landIndex).toFixed(1)));
+            const cost = Math.floor(4000 * Math.pow(35, landIndex - 1));
+            const multiplier = Math.max(1, parseFloat(Math.pow(5.5, landIndex).toFixed(1))); // 전반적인 땅 효율 상향
             return {
                 id: id,
                 name: `땅 ${id}`,
@@ -670,7 +676,18 @@
         function getSingleWorkerHarvestYield(land) {
             const landData = land || getCurrentLandData();
             const landInfo = getLandInfo(landData.id === 6 ? 5 : landData.id - 1);
-            return Math.floor(landData.workerYieldLevel * landInfo.multiplier);
+            // 일꾼 기본 생산량 대폭 상향
+            return Math.floor(Math.max(1, landData.workerYieldLevel * 2) * landInfo.multiplier);
+        }
+
+        function getLandGPS(land) {
+            const speedSec = Math.max(0.1, 1.0 - (land.workerSpeedLevel - 1) * 0.05);
+            const harvestsPerSec = 1 / speedSec;
+            return land.workerCount * getSingleWorkerHarvestYield(land) * harvestsPerSec;
+        }
+
+        function getGeeseGPS() {
+            return (gameState.gooseCount || 0) * 50000000; // 거위당 50M로 상향
         }
 
         function getLandGPS(land) {
@@ -1018,7 +1035,6 @@
             const centerX = Math.floor(w / 2);
             const groundY = h - 52;
             const currentLand = getCurrentLandData();
-            const landInfo = getLandInfo(gameState.currentLandIndex);
             const heightLevel = getBeanstalkHeight(currentLand);
             const isHeaven = (currentLand.id === 6);
 
@@ -1053,15 +1069,16 @@
                     topSegThickness = segThickness;
                 }
 
+                // 천국일 경우 확실하게 황금빛/빛나는 색상 적용
                 let mainColor = (i % 2 === 0) ? '#15803d' : '#166534';
                 let edgeLight = '#22c55e';
                 let edgeDark = '#052e16';
                 let leafColor = '#22c55e';
 
                 if (isHeaven) {
-                    mainColor = (i % 2 === 0) ? '#eab308' : '#ca8a04';
+                    mainColor = (i % 2 === 0) ? '#facc15' : '#eab308';
                     edgeLight = '#fef08a';
-                    edgeDark = '#854d0e';
+                    edgeDark = '#ca8a04';
                     leafColor = '#fef08a';
                 }
 
@@ -1113,7 +1130,7 @@
                 const currentThickness = Math.max(2, Math.floor(baseThickness * Math.pow(1 - t, 1.3)));
 
                 if (isHeaven) {
-                    ctx.fillStyle = (step % 2 === 0) ? '#eab308' : '#fef08a';
+                    ctx.fillStyle = (step % 2 === 0) ? '#facc15' : '#fef08a';
                 } else {
                     ctx.fillStyle = (step % 2 === 0) ? '#15803d' : '#22c55e';
                 }
@@ -1335,7 +1352,7 @@
             document.getElementById('gold-display').innerText = `₩${formatNumber(gameState.gold)}`;
             document.getElementById('gps-display').innerText = `+₩${formatNumber(getTotalGoldPerSecond())}/초`;
 
-            // 천국(Land 6) 화면에 있을 때만 거위 뽑기 버튼 무조건 표시
+            // 천국(Land 6) 화면일 때 거위 뽑기 버튼 무조건 강제 표시
             const gachaHeaderBtn = document.getElementById('gacha-btn-header');
             if (gachaHeaderBtn) {
                 if (gameState.hasElevator && currentLand.id === 6) {
