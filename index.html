@@ -210,15 +210,15 @@
                 <div id="elevator-shop-card" class="border-2 border-yellow-400 bg-neutral-950 p-3 rounded flex flex-col sm:flex-row items-center justify-between gap-3 hidden">
                     <div class="flex items-center gap-3 w-full sm:w-auto">
                         <div class="w-10 h-10 border border-yellow-400 bg-black flex items-center justify-center text-yellow-400 text-xl shrink-0">
-                            <i class="fa-solid fa-elevator"></i>
+                            <i class="fa-solid fa-unlock"></i>
                         </div>
                         <div>
-                            <div class="font-bold text-sm text-yellow-300">천국행 엘리베이터 설치</div>
-                            <div class="text-xs text-neutral-300">콩나무 100m 돌파 기념! 천국(효율 1.5배)으로 올라갑니다.</div>
+                            <div class="font-bold text-sm text-yellow-300">천국 해방</div>
+                            <div class="text-xs text-neutral-300">콩나무 100m 돌파 기념! 천국(효율 1.5배)을 해방합니다.</div>
                         </div>
                     </div>
                     <button id="buy-elevator-btn" onclick="buyElevator()" class="pixel-btn-gold px-4 py-2 text-xs rounded font-bold w-full sm:w-auto whitespace-nowrap">
-                        설치 (₩5.00B)
+                        해방 (₩5.00B)
                     </button>
                 </div>
 
@@ -1149,7 +1149,7 @@
 
         function buyNextLand() {
             if (gameState.lands.length >= 5) {
-                openModal("구매 제한", "기존 땅은 최대 5개까지만 구매할 수 있습니다.<br>땅 5의 콩나무를 100m까지 키워 <b>천국행 엘리베이터</b>를 설치하세요!");
+                openModal("구매 제한", "기존 땅은 최대 5개까지만 구매할 수 있습니다.<br>땅 5의 콩나무를 100m까지 키워 <b>천국 해방</b>을 진행하세요!");
                 return;
             }
             const nextLandIndex = gameState.lands.length;
@@ -1195,10 +1195,10 @@
                 gameState.currentLandIndex = gameState.lands.length - 1; // Go to Heaven
                 syncActiveWorkers();
                 playSound('upgrade');
-                openModal("천국 진입 성공!", "축하합니다! 천국행 엘리베이터를 설치했습니다!<br>천국에서는 수확 효율이 <b>1.5배(x615.1)</b>로 대폭 증가하며, <b>황금알 거위 뽑기</b>를 이용할 수 있습니다!");
+                openModal("천국 해방 성공!", "축하합니다! 드디어 천국을 해방했습니다!<br>천국에서는 수확 효율이 <b>1.5배(x615.1)</b>로 대폭 증가하며, 천국에서만 <b>황금알 거위 뽑기</b>를 이용할 수 있습니다!");
                 updateUI();
             } else {
-                openModal("골드 부족", `엘리베이터 설치 비용이 부족합니다.<br>필요 골드: ₩${formatNumber(elevatorCost)}`);
+                openModal("골드 부족", `천국 해방 비용이 부족합니다.<br>필요 골드: ₩${formatNumber(elevatorCost)}`);
             }
         }
 
@@ -1345,12 +1345,13 @@
             // Gacha Header Button Toggle
             const gachaHeaderBtn = document.getElementById('gacha-btn-header');
             if (gachaHeaderBtn) {
-                if (gameState.hasElevator) {
+                // 천국(Land 6) 화면에 있을 때만 거위 뽑기 버튼 표시
+                if (gameState.hasElevator && currentLand.id === 6) {
                     gachaHeaderBtn.classList.remove('hidden');
-                    gachaHeaderBtn.style.display = 'flex';
+                    gachaHeaderBtn.style.display = ''; 
                 } else {
                     gachaHeaderBtn.classList.add('hidden');
-                    gachaHeaderBtn.style.display = 'none';
+                    gachaHeaderBtn.style.display = ''; 
                 }
             }
 
