@@ -919,13 +919,13 @@
             if (targetLand) {
                 targetLand.totalLandGold += amount;
             }
-            updateUI();
         }
 
         function harvestFromWorker(x, y) {
             const currentLand = getCurrentLandData();
             const amount = getSingleWorkerHarvestYield(currentLand);
-            addGold(amount, currentLand);
+            // 버그 수정: 일꾼 애니메이션에 의한 골드 중복 획득 제거 
+            // (실제 골드 획득은 gameLoop의 모든 땅 백그라운드 통합 정산으로 처리됩니다)
             spawnParticle(x, y, `+₩${formatNumber(amount)}`, '#4ade80');
             playSound('crunch');
         }
@@ -938,6 +938,7 @@
             const currentLand = getCurrentLandData();
             const yieldVal = getSingleWorkerHarvestYield(currentLand);
             addGold(yieldVal, currentLand);
+            updateUI();
             spawnParticle(clickX, clickY, `+₩${formatNumber(yieldVal)}`, '#ffffff');
             playSound('click');
         }
@@ -1481,6 +1482,7 @@
                 const delta = (now - lastAutoTick) / 1000;
                 
                 if (delta >= 0.1) {
+                    let earnedSomething = false;
                     // Collect background income for all unlocked lands
                     gameState.lands.forEach(land => {
                         let landGps = getLandGPS(land);
@@ -1489,8 +1491,12 @@
                         const earned = landGps * delta;
                         if (earned > 0) {
                             addGold(earned, land);
+                            earnedSomething = true;
                         }
                     });
+                    if (earnedSomething) {
+                        updateUI();
+                    }
                     lastAutoTick = now;
                 }
 
