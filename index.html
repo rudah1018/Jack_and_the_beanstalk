@@ -214,7 +214,7 @@
                         </div>
                         <div>
                             <div class="font-bold text-sm text-yellow-300">천국 해방</div>
-                            <div class="text-xs text-neutral-300">콩나무 100m 돌파 기념! 천국(효율 1.5배)을 해방합니다.</div>
+                            <div class="text-xs text-neutral-300">콩나무 100m 돌파 기념! 천국(효율 1,200배)을 해방합니다.</div>
                         </div>
                     </div>
                     <button id="buy-elevator-btn" onclick="buyElevator()" class="pixel-btn-gold px-4 py-2 text-xs rounded font-bold w-full sm:w-auto whitespace-nowrap">
@@ -522,7 +522,7 @@
             const id = landIndex + 1;
             if (landIndex === 0) return { id: 1, name: '땅 1', cost: 0, multiplier: 1.0 };
             if (landIndex === 5) {
-                return { id: 6, name: '천국', cost: 0, multiplier: 615.1 };
+                return { id: 6, name: '천국', cost: 0, multiplier: 1200.0 };
             }
             
             const cost = Math.floor(4000 * Math.pow(30, landIndex - 1));
@@ -700,7 +700,7 @@
             return Math.max(1, height);
         }
 
-        const activeWorkers = [];
+        let activeWorkers = [];
         function syncActiveWorkers() {
             const currentLand = getCurrentLandData();
             activeWorkers.length = 0;
@@ -708,19 +708,18 @@
                 activeWorkers.push(new PixelWorker(i));
             }
         }
+        
         let lastBackgroundCheckTime = Date.now();
 
-        // Handle Page Visibility changes to calculate elapsed time when switching back from another tab
+        // Continuous earnings accumulation in background via Page Visibility & real-time delta tracking
         document.addEventListener("visibilitychange", () => {
             if (document.hidden) {
-                // Save timestamp when leaving the tab
                 lastBackgroundCheckTime = Date.now();
                 saveGame();
             } else {
-                // When returning to the tab, calculate elapsed time and credit offline/background earnings
                 const now = Date.now();
                 const elapsedSec = Math.floor((now - lastBackgroundCheckTime) / 1000);
-                if (elapsedSec > 1) {
+                if (elapsedSec > 0) {
                     const totalGPS = getTotalGoldPerSecond();
                     if (totalGPS > 0) {
                         const backgroundGold = totalGPS * elapsedSec;
@@ -732,10 +731,6 @@
                             if (land.id === 6) landGPS += getGeeseGPS();
                             land.totalLandGold += landGPS * elapsedSec;
                         });
-
-                        setTimeout(() => {
-                            openModal("백그라운드 수입 정산", `다른 화면을 보는 동안 <b>${elapsedSec}초</b>가 흘렀습니다!<br>누적 수입: <b>₩${formatNumber(backgroundGold)}</b>`);
-                        }, 400);
                     }
                 }
                 lastBackgroundCheckTime = now;
@@ -1213,7 +1208,7 @@
                 gameState.currentLandIndex = gameState.lands.length - 1;
                 syncActiveWorkers();
                 playSound('upgrade');
-                openModal("천국 해방 성공!", "축하합니다! 드디어 천국을 해방했습니다!<br>천국에서는 수확 효율이 <b>615.1배</b>로 대폭 증가하며, 천국에서만 <b>황금알 거위 뽑기</b>를 이용할 수 있습니다!");
+                openModal("천국 해방 성공!", "축하합니다! 드디어 천국을 해방했습니다!<br>천국에서는 수확 효율이 <b>1,200배</b>로 대폭 증가하며, 천국에서만 <b>황금알 거위 뽑기</b>를 이용할 수 있습니다!");
                 updateUI();
             } else {
                 openModal("골드 부족", `천국 해방 비용이 부족합니다.<br>필요 골드: ₩${formatNumber(elevatorCost)}`);
@@ -1482,8 +1477,9 @@
             }
             sanitizeGameState();
 
-            if (timeDiffSec > 5) {
-                timeDiffSec = Math.min(timeDiffSec, 86400); 
+            // Seamlessly accumulate earnings in background without pop-ups
+            if (timeDiffSec > 0) {
+                timeDiffSec = Math.min(timeDiffSec, 604800); // Up to 7 days
                 const totalGPS = getTotalGoldPerSecond();
                 if (totalGPS > 0) {
                     const offlineGold = totalGPS * timeDiffSec;
@@ -1495,10 +1491,6 @@
                         if (land.id === 6) landGPS += getGeeseGPS();
                         land.totalLandGold += landGPS * timeDiffSec;
                     });
-
-                    setTimeout(() => {
-                        openModal("방치형 보상 도착!", `자리 비움 시간: <b>${timeDiffSec}초</b><br>쉬는 동안 <b>₩${formatNumber(offlineGold)}</b>의 수입을 획득했습니다!`);
-                    }, 500);
                 }
             }
         }
