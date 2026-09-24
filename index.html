@@ -77,6 +77,21 @@
             transform: translate(2px, 2px);
         }
 
+        .pixel-btn-gold {
+            border: 2px solid #ffffff;
+            background: linear-gradient(180deg, #fef08a 0%, #eab308 100%);
+            color: #000000;
+            font-weight: bold;
+            box-shadow: inset -2px -2px 0px 0px #ca8a04, inset 2px 2px 0px 0px #fef08a;
+            transition: transform 0.05s ease;
+        }
+        .pixel-btn-gold:hover:not(:disabled) {
+            background: linear-gradient(180deg, #fef9c3 0%, #facc15 100%);
+        }
+        .pixel-btn-gold:active:not(:disabled) {
+            transform: translate(2px, 2px);
+        }
+
         .pixel-box-mono {
             border: 3px solid #ffffff;
             background-color: #000000;
@@ -121,6 +136,12 @@
 
             <!-- Action Controls & Shop Trigger -->
             <div class="pointer-events-auto flex items-center gap-2">
+                <!-- Gacha Shop Button (Heaven Only) -->
+                <button id="gacha-btn-header" onclick="openGachaModal()" class="pixel-btn-gold px-3 py-2.5 rounded text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-lg hidden">
+                    <i class="fa-solid fa-egg text-base"></i>
+                    <span>거위 뽑기</span>
+                </button>
+
                 <!-- Open Shop Button -->
                 <button onclick="openShop()" class="pixel-btn-white px-4 py-2.5 rounded text-xs sm:text-sm font-black flex items-center gap-2 shadow-lg">
                     <i class="fa-solid fa-store text-base"></i>
@@ -142,7 +163,7 @@
         <button onclick="prevLand()" id="prev-land-btn" class="pixel-btn-mono px-2 py-1 text-xs rounded font-bold">
             <i class="fa-solid fa-chevron-left"></i>
         </button>
-        <div class="text-center px-2 min-w-[130px]">
+        <div class="text-center px-2 min-w-[140px]">
             <div id="current-land-title" class="text-xs sm:text-sm font-bold text-white">땅 1 (x1.0 효율)</div>
             <div id="land-gps-sub" class="text-[10px] text-neutral-400">현재 땅 생산: +₩0/초</div>
         </div>
@@ -185,8 +206,24 @@
             <!-- Shop Content Area -->
             <div class="p-4 overflow-y-auto flex-1 space-y-4 bg-black text-neutral-200">
                 
-                <!-- 0. Buy New Land Section -->
-                <div class="border-2 border-amber-400 bg-neutral-950 p-3 rounded flex flex-col sm:flex-row items-center justify-between gap-3">
+                <!-- Elevator Purchase Banner (Conditional on Land 5 & Beanstalk >= 100m) -->
+                <div id="elevator-shop-card" class="border-2 border-yellow-400 bg-neutral-950 p-3 rounded flex flex-col sm:flex-row items-center justify-between gap-3 hidden">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <div class="w-10 h-10 border border-yellow-400 bg-black flex items-center justify-center text-yellow-400 text-xl shrink-0">
+                            <i class="fa-solid fa-elevator"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-yellow-300">천국행 엘리베이터 설치</div>
+                            <div class="text-xs text-neutral-300">콩나무 100m 돌파 기념! 천국(효율 1.5배)으로 올라갑니다.</div>
+                        </div>
+                    </div>
+                    <button id="buy-elevator-btn" onclick="buyElevator()" class="pixel-btn-gold px-4 py-2 text-xs rounded font-bold w-full sm:w-auto whitespace-nowrap">
+                        설치 (₩5.00B)
+                    </button>
+                </div>
+
+                <!-- Buy New Land Section -->
+                <div id="buy-land-card" class="border-2 border-amber-400 bg-neutral-950 p-3 rounded flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div class="flex items-center gap-3 w-full sm:w-auto">
                         <div class="w-10 h-10 border border-amber-400 bg-black flex items-center justify-center text-amber-400 text-xl shrink-0">
                             <i class="fa-solid fa-map-location-dot"></i>
@@ -253,43 +290,6 @@
                     </button>
                 </div>
 
-                <!-- 4. Elevator (New Feature - Shown in Land 5) -->
-                <div id="elevator-section" class="border-2 border-cyan-400 bg-neutral-950 p-3 rounded flex flex-col sm:flex-row items-center justify-between gap-3 hidden">
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
-                        <div class="w-10 h-10 border border-cyan-400 bg-black flex items-center justify-center text-cyan-400 text-xl shrink-0">
-                            <i class="fa-solid fa-elevator"></i>
-                        </div>
-                        <div>
-                            <div class="font-bold text-sm text-white">천국행 엘리베이터 설치</div>
-                            <div class="text-[11px] text-cyan-300">콩나무 100m 달성! 천국으로 향하세요.</div>
-                        </div>
-                    </div>
-                    <button id="buy-elevator-btn" onclick="buyElevator()" class="pixel-btn-white px-4 py-2 text-xs rounded font-bold w-full sm:w-auto whitespace-nowrap text-cyan-600">
-                        설치 (₩1.00B)
-                    </button>
-                </div>
-
-                <!-- 5. Heaven Gacha (New Feature - Shown in Heaven) -->
-                <div id="gacha-section" class="border-2 border-pink-400 bg-neutral-950 p-3 rounded flex flex-col sm:flex-row items-center justify-between gap-3 hidden">
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
-                        <div class="w-10 h-10 border border-pink-400 bg-black flex items-center justify-center text-pink-400 text-xl shrink-0">
-                            <i class="fa-solid fa-egg"></i>
-                        </div>
-                        <div>
-                            <div class="font-bold text-sm text-white">황금알 거위 뽑기 <span class="text-xs text-pink-300">(0.01%)</span></div>
-                            <div class="text-[11px] text-neutral-400">보유 거위: <span id="goose-count-display" class="text-white font-bold">0</span>마리 (마리당 1초에 20M 획득)</div>
-                        </div>
-                    </div>
-                    <div class="flex flex-col gap-1.5 w-full sm:w-auto">
-                        <button id="gacha-btn-1" onclick="pullGacha(1)" class="pixel-btn-mono border-pink-400 text-pink-100 hover:bg-pink-900 px-4 py-1.5 text-xs rounded font-bold whitespace-nowrap">
-                            1회 뽑기 (₩10.0M)
-                        </button>
-                        <button id="gacha-btn-100" onclick="pullGacha(100)" class="pixel-btn-white border-pink-500 text-pink-600 px-4 py-1.5 text-xs rounded font-bold whitespace-nowrap">
-                            100회 연속 (₩1.00B)
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Reset Data Button -->
                 <div class="text-center pt-3 border-t border-neutral-900">
                     <button onclick="confirmReset()" class="text-xs text-neutral-500 hover:text-white underline">
@@ -297,6 +297,47 @@
                     </button>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- GACHA MODAL (Golden Goose Draw) -->
+    <div id="gacha-modal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+        <div class="pixel-box-mono w-full max-w-md flex flex-col rounded-lg overflow-hidden shadow-2xl border-2 border-yellow-400 bg-neutral-950">
+            <div class="bg-yellow-500 text-black border-b-2 border-white p-3 flex items-center justify-between font-bold">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-egg text-lg"></i>
+                    <span>천국 전용: 황금알 거위 뽑기</span>
+                </div>
+                <button onclick="closeGachaModal()" class="pixel-btn-mono px-2 py-0.5 text-xs rounded bg-black text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="p-5 text-center space-y-4">
+                <div class="w-20 h-20 mx-auto border-2 border-yellow-300 bg-black rounded-full flex items-center justify-center text-4xl text-yellow-300 shadow-inner">
+                    <i class="fa-solid fa-feather-pointed animate-bounce"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-yellow-300">황금알을 낳는 거위 (0.01%)</h3>
+                    <p class="text-xs text-neutral-300 mt-1">획득 시 천국에 배치되며 <b>1초당 ₩20,000,000 (20M)</b>을 무한 정산합니다!</p>
+                    <p class="text-[11px] text-neutral-400 mt-2">보유한 황금 거위: <span id="goose-count-display" class="text-yellow-400 font-bold">0마리</span></p>
+                </div>
+
+                <div id="gacha-result-box" class="min-h-[48px] bg-black border border-neutral-700 rounded p-2 text-xs text-yellow-200 flex items-center justify-center">
+                    행운을 빕니다! 버튼을 눌러 뽑기를 진행하세요.
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="pullGacha(1)" class="pixel-btn-gold p-3 rounded text-xs flex flex-col items-center justify-center gap-1">
+                        <span>1회 뽑기</span>
+                        <span class="text-[10px] text-black/80">₩1.00B</span>
+                    </button>
+                    <button onclick="pullGacha(10)" class="pixel-btn-gold p-3 rounded text-xs flex flex-col items-center justify-center gap-1">
+                        <span>10회 연속 뽑기</span>
+                        <span class="text-[10px] text-black/80">₩10.00B</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -320,7 +361,6 @@
         let bgmInterval = null;
         let bgmStep = 0;
 
-        // 8-bit Bright Retro BGM Note Frequencies (Clear C5-C6 Octaves)
         const bgmNotes = [
             523.25, 659.25, 783.99, 1046.50, 783.99, 659.25,
             587.33, 698.46, 880.00, 1174.66, 880.00, 698.46,
@@ -360,7 +400,6 @@
             if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
             const now = audioCtx.currentTime;
 
-            // Main Melody Synth (Square Wave - High & Clear Volume)
             const noteFreq = bgmNotes[bgmStep % bgmNotes.length];
             if (noteFreq) {
                 try {
@@ -368,11 +407,8 @@
                     const gain = audioCtx.createGain();
                     osc.type = 'square';
                     osc.frequency.setValueAtTime(noteFreq, now);
-                    
-                    // Volume boosted from 0.02 to 0.08 for rich phone speaker output
-                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.setValueAtTime(0.06, now);
                     gain.gain.linearRampToValueAtTime(0.001, now + 0.15);
-                    
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
                     osc.start(now);
@@ -380,7 +416,6 @@
                 } catch (e) {}
             }
 
-            // Bass Rhythm Synth (Triangle Wave)
             if (bgmStep % 2 === 0) {
                 const bassFreq = bgmBass[Math.floor(bgmStep / 2) % bgmBass.length];
                 try {
@@ -388,11 +423,8 @@
                     const gainB = audioCtx.createGain();
                     oscB.type = 'triangle';
                     oscB.frequency.setValueAtTime(bassFreq, now);
-                    
-                    // Volume boosted to 0.10
-                    gainB.gain.setValueAtTime(0.10, now);
+                    gainB.gain.setValueAtTime(0.08, now);
                     gainB.gain.linearRampToValueAtTime(0.001, now + 0.28);
-                    
                     oscB.connect(gainB);
                     gainB.connect(audioCtx.destination);
                     oscB.start(now);
@@ -482,29 +514,19 @@
             }
         }
 
-        function handleFirstInteraction() {
-            ensureAudioContext();
-        }
-
         ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
-            window.addEventListener(evt, handleFirstInteraction, { passive: true });
+            window.addEventListener(evt, ensureAudioContext, { passive: true });
         });
 
-        // Configuration for Lands (Stage System) Including Heaven (Land 6)
         function getLandInfo(landIndex) {
             const id = landIndex + 1;
-            if (landIndex === 0) {
-                return { id: 1, name: '땅 1', cost: 0, multiplier: 1.0 };
-            }
+            if (landIndex === 0) return { id: 1, name: '땅 1', cost: 0, multiplier: 1.0 };
             if (landIndex === 5) {
-                // 천국 (Heaven) - Unlocked via Elevator from Land 5
-                const land5Mult = Math.max(1, parseFloat(Math.pow(4.5, 4).toFixed(1)));
-                const heavenMult = parseFloat((land5Mult * 1.5).toFixed(1));
-                return { id: 6, name: '천국', cost: 0, multiplier: heavenMult };
+                // 천국 (땅 6): 땅 5(x410.1)의 1.5배 = x615.1배 수확 효율
+                return { id: 6, name: '천국', cost: 0, multiplier: 615.1 };
             }
-            // 땅 구매 가격 대폭 인상 (땅 2: 5,000 / 땅 3: 200,000 / 땅 4: 15,000,000 / 땅 5: 1,200,000,000)
+            
             const cost = Math.floor(5000 * Math.pow(40, landIndex - 1));
-            // 땅별 수확 효율 배율 (단계가 올라갈수록 4.5배씩 증가)
             const multiplier = Math.max(1, parseFloat(Math.pow(4.5, landIndex).toFixed(1)));
             return {
                 id: id,
@@ -514,12 +536,12 @@
             };
         }
 
-        // Global Game State (Multi-Land Support)
+        // Global Game State (Multi-Land + Heaven + Elevator + Geese)
         const gameState = {
             gold: 10,
             totalGold: 10,
             currentLandIndex: 0,
-            elevatorPurchased: false,
+            hasElevator: false,
             gooseCount: 0,
             lands: [
                 {
@@ -540,12 +562,11 @@
             return gameState.lands[gameState.currentLandIndex];
         }
 
-        // Data migration and sanitation strictly protecting existing players
         function sanitizeGameState() {
             if (!Number.isFinite(gameState.gold) || gameState.gold < 0) gameState.gold = 10;
             if (!Number.isFinite(gameState.totalGold) || gameState.totalGold < 0) gameState.totalGold = gameState.gold;
-            if (typeof gameState.elevatorPurchased === 'undefined') gameState.elevatorPurchased = false;
-            if (typeof gameState.gooseCount === 'undefined') gameState.gooseCount = 0;
+            if (typeof gameState.hasElevator !== 'boolean') gameState.hasElevator = false;
+            if (!Number.isFinite(gameState.gooseCount) || gameState.gooseCount < 0) gameState.gooseCount = 0;
             
             if (!Array.isArray(gameState.lands) || gameState.lands.length === 0) {
                 gameState.lands = [{ id: 1, workerCount: 1, workerYieldLevel: 1, workerSpeedLevel: 1, totalLandGold: 0 }];
@@ -554,12 +575,9 @@
             if (!Number.isInteger(gameState.currentLandIndex) || gameState.currentLandIndex < 0) {
                 gameState.currentLandIndex = 0;
             }
-            if (gameState.currentLandIndex >= gameState.lands.length) {
-                gameState.currentLandIndex = gameState.lands.length - 1;
-            }
 
             gameState.lands.forEach((land, idx) => {
-                land.id = idx + 1;
+                land.id = (idx === 5) ? 6 : idx + 1;
                 if (!Number.isFinite(land.workerCount) || land.workerCount < 1) land.workerCount = 1;
                 if (land.workerCount > 25) land.workerCount = 25;
                 if (!Number.isFinite(land.workerYieldLevel) || land.workerYieldLevel < 1) land.workerYieldLevel = 1;
@@ -568,9 +586,22 @@
                 if (!Number.isFinite(land.totalLandGold) || land.totalLandGold < 0) land.totalLandGold = 0;
             });
 
-            // Allow up to 6 lands now (Heaven is 6th)
-            if (gameState.lands.length > 6) {
-                gameState.lands = gameState.lands.slice(0, 6);
+            // Ensure elevator grants Heaven land
+            if (gameState.hasElevator && gameState.lands.length < 6) {
+                const heavenLand = gameState.lands.find(l => l.id === 6);
+                if (!heavenLand) {
+                    gameState.lands.push({
+                        id: 6,
+                        workerCount: 1,
+                        workerYieldLevel: 1,
+                        workerSpeedLevel: 1,
+                        totalLandGold: 0
+                    });
+                }
+            }
+
+            if (gameState.currentLandIndex >= gameState.lands.length) {
+                gameState.currentLandIndex = gameState.lands.length - 1;
             }
         }
 
@@ -591,33 +622,24 @@
 
         function getCostForLevel(baseCost, factor, currentLevel, mult, maxLevel = 999) {
             currentLevel = Math.max(1, currentLevel || 1);
-            if (currentLevel >= maxLevel) {
-                return { cost: 0, count: 0 };
-            }
+            if (currentLevel >= maxLevel) return { cost: 0, count: 0 };
 
             if (mult === 'max') {
                 const effectiveMax = Math.min(maxLevel, currentLevel + 100);
                 let totalCost = 0;
                 let count = 0;
-                
                 for (let i = 0; i < (effectiveMax - currentLevel); i++) {
                     let nextCost = Math.floor(baseCost * Math.pow(factor, currentLevel + i));
                     if (gameState.gold >= totalCost + nextCost) {
                         totalCost += nextCost;
                         count++;
-                    } else {
-                        break;
-                    }
+                    } else break;
                 }
-                
-                if (count === 0) {
-                    return { cost: Math.floor(baseCost * Math.pow(factor, currentLevel)), count: 1 };
-                }
+                if (count === 0) return { cost: Math.floor(baseCost * Math.pow(factor, currentLevel)), count: 1 };
                 return { cost: Math.max(1, totalCost), count: Math.max(1, count) };
             } else {
                 let available = Math.min(mult, maxLevel - currentLevel);
                 if (available <= 0) return { cost: 0, count: 0 };
-                
                 let totalCost = 0;
                 for (let i = 0; i < available; i++) {
                     totalCost += Math.floor(baseCost * Math.pow(factor, currentLevel + i));
@@ -628,31 +650,28 @@
 
         function getWorkerCost(land) {
             const targetLand = land || getCurrentLandData();
-            const landIdx = targetLand.id - 1;
-            // 땅 번호가 클수록 고용 기본 비용 대폭 증가 (땅 단계당 12배)
+            const landIdx = (targetLand.id === 6) ? 5 : targetLand.id - 1;
             const baseCost = Math.floor(15 * Math.pow(12, landIdx));
             return getCostForLevel(baseCost, 1.15, targetLand.workerCount, buyMultiplier, 25);
         }
 
         function getYieldCost(land) { 
             const targetLand = land || getCurrentLandData();
-            const landIdx = targetLand.id - 1;
-            // 땅 번호가 클수록 수확량 강화 기본 비용 대폭 증가 (땅 단계당 12배)
+            const landIdx = (targetLand.id === 6) ? 5 : targetLand.id - 1;
             const baseCost = Math.floor(30 * Math.pow(12, landIdx));
             return getCostForLevel(baseCost, 1.20, targetLand.workerYieldLevel, buyMultiplier, 999); 
         }
 
         function getSpeedCost(land) {
             const targetLand = land || getCurrentLandData();
-            const landIdx = targetLand.id - 1;
-            // 땅 번호가 클수록 속도 강화 기본 비용 대폭 증가 (땅 단계당 12배)
+            const landIdx = (targetLand.id === 6) ? 5 : targetLand.id - 1;
             const baseCost = Math.floor(25 * Math.pow(12, landIdx));
             return getCostForLevel(baseCost, 1.25, targetLand.workerSpeedLevel, buyMultiplier, 18);
         }
 
         function getSingleWorkerHarvestYield(land) {
             const landData = land || getCurrentLandData();
-            const landInfo = getLandInfo(landData.id - 1);
+            const landInfo = getLandInfo(landData.id === 6 ? 5 : landData.id - 1);
             return Math.floor(landData.workerYieldLevel * landInfo.multiplier);
         }
 
@@ -662,22 +681,22 @@
             return land.workerCount * getSingleWorkerHarvestYield(land) * harvestsPerSec;
         }
 
+        function getGeeseGPS() {
+            return (gameState.gooseCount || 0) * 20000000; // 20M per goose per sec
+        }
+
         function getTotalGoldPerSecond() {
             let total = 0;
             gameState.lands.forEach(land => {
                 total += getLandGPS(land);
             });
-            
-            // Add Golden Goose passive income
-            if (gameState.gooseCount > 0) {
-                total += gameState.gooseCount * 20000000; // 20m (2천만) per goose per second
-            }
-            
+            total += getGeeseGPS();
             return total;
         }
 
         function getBeanstalkHeight(land) {
             const landData = land || getCurrentLandData();
+            if (!landData) return 1;
             const total = Number.isFinite(landData.totalLandGold) ? landData.totalLandGold : 0;
             if (total <= 10) return 1;
             const h = Math.floor(1 + Math.log10(total / 10 + 1) * 12);
@@ -692,6 +711,65 @@
             }
             while (activeWorkers.length > currentLand.workerCount) {
                 activeWorkers.pop();
+            }
+        }
+
+        class GoldenGoose {
+            constructor(id) {
+                this.id = id;
+                const w = canvas.width || 360;
+                this.x = Math.max(30, Math.min(w - 30, Math.random() * w));
+                this.direction = Math.random() > 0.5 ? 1 : -1;
+                this.speed = 0.4 + Math.random() * 0.4;
+            }
+
+            update(canvasWidth) {
+                this.x += this.direction * this.speed;
+                if (this.x <= 30) {
+                    this.x = 30;
+                    this.direction = 1;
+                } else if (this.x >= canvasWidth - 30) {
+                    this.x = canvasWidth - 30;
+                    this.direction = -1;
+                }
+            }
+
+            draw(ctx, groundY) {
+                ctx.save();
+                ctx.translate(Math.floor(this.x), Math.floor(groundY - 12));
+
+                // Golden Goose Shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(-6, 8, 12, 3);
+
+                // Body (Golden Yellow)
+                ctx.fillStyle = '#facc15';
+                ctx.fillRect(-6, -2, 12, 8);
+
+                // Wing
+                ctx.fillStyle = '#fef08a';
+                ctx.fillRect(-3, 0, 6, 4);
+
+                // Head/Neck
+                ctx.fillStyle = '#facc15';
+                ctx.fillRect(this.direction > 0 ? 3 : -7, -8, 4, 8);
+
+                // Orange Beak
+                ctx.fillStyle = '#f97316';
+                ctx.fillRect(this.direction > 0 ? 7 : -10, -7, 3, 2);
+
+                // Eye
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.direction > 0 ? 5 : -5, -7, 1, 1);
+
+                ctx.restore();
+            }
+        }
+
+        const activeGeese = [];
+        function syncGeese() {
+            while (activeGeese.length < gameState.gooseCount) {
+                activeGeese.push(new GoldenGoose(activeGeese.length));
             }
         }
 
@@ -744,7 +822,6 @@
         function resizeCanvas() {
             const w = Math.floor(window.innerWidth || document.documentElement.clientWidth || 360);
             const h = Math.floor(window.innerHeight || document.documentElement.clientHeight || 640);
-            
             if (Math.abs(canvas.width - w) > 1 || Math.abs(canvas.height - h) > 1) {
                 canvas.width = w;
                 canvas.height = h;
@@ -870,86 +947,9 @@
             handleInteraction(e.clientX, e.clientY);
         });
 
-        // GEESE LOGIC
-        const activeGeese = [];
-        function syncGeese() {
-            // Visual cap for performance (max 10 geese rendered on screen, despite owning more)
-            const targetCount = Math.min(10, gameState.gooseCount || 0);
-            while (activeGeese.length < targetCount) {
-                activeGeese.push(new GoldenGoose());
-            }
-        }
-
-        class GoldenGoose {
-            constructor() {
-                const w = canvas.width || 360;
-                this.x = 40 + Math.random() * (w - 80);
-                this.direction = Math.random() > 0.5 ? 1 : -1;
-                this.speed = 0.2 + Math.random() * 0.2;
-                this.animOffset = Math.random() * 100;
-            }
-            update(w) {
-                this.x += this.direction * this.speed;
-                if (this.x <= 30) { this.x = 30; this.direction = 1; }
-                if (this.x >= w - 30) { this.x = w - 30; this.direction = -1; }
-                if (Math.random() < 0.01) this.direction *= -1;
-            }
-            draw(ctx, groundY) {
-                ctx.save();
-                ctx.translate(Math.floor(this.x), Math.floor(groundY));
-                
-                // Bobbing animation
-                const bob = Math.sin(Date.now() * 0.005 + this.animOffset) * 2;
-                
-                // Body (Golden Yellow)
-                ctx.fillStyle = '#fef08a';
-                ctx.fillRect(-8, -10 - bob, 16, 10);
-                
-                // Head/Neck
-                ctx.fillRect(this.direction > 0 ? 6 : -12, -18 - bob, 6, 8);
-                
-                // Beak
-                ctx.fillStyle = '#f97316';
-                ctx.fillRect(this.direction > 0 ? 12 : -16, -16 - bob, 4, 3);
-                
-                // Eye
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(this.direction > 0 ? 8 : -10, -17 - bob, 2, 2);
-                
-                // Legs
-                ctx.fillStyle = '#f97316';
-                const legWalk = Math.sin(Date.now() * 0.01 * this.speed + this.animOffset) * 2;
-                ctx.fillRect(-4, -bob, 2, 4 + legWalk);
-                ctx.fillRect(2, -bob, 2, 4 - legWalk);
-                
-                ctx.restore();
-            }
-        }
-
-        let lastGooseGoldTime = Date.now();
-        function updateGeesePassiveIncome() {
-            if (!gameState.gooseCount) return;
-            
-            const now = Date.now();
-            if (now - lastGooseGoldTime >= 1000) {
-                // 1 goose = 20,000,000 (20M) gold per second
-                const gooseGold = 20000000 * gameState.gooseCount;
-                const heavenLand = gameState.lands.find(l => l.id === 6);
-                
-                if (heavenLand) {
-                    addGold(gooseGold, heavenLand);
-                    // Show particle if currently looking at heaven
-                    if (gameState.currentLandIndex === 5) {
-                        const px = canvas.width / 2 + (Math.random() * 120 - 60);
-                        spawnParticle(px, canvas.height - 70, `+₩${formatNumber(gooseGold)} (거위)`, '#fde047');
-                    }
-                }
-                lastGooseGoldTime = now;
-            }
-        }
-
         function drawBackgroundAndClouds(ctx, w, h) {
             const currentLand = getCurrentLandData();
+            const isHeaven = (currentLand.id === 6);
             const heightLevel = getBeanstalkHeight(currentLand);
             const groundY = h - 52;
 
@@ -958,72 +958,54 @@
 
             const skyGrad = ctx.createLinearGradient(0, 0, 0, Math.max(1, groundY));
             
-            if (currentLand.id === 6) {
-                // Heaven Theme
-                skyGrad.addColorStop(0, '#fde047');
-                skyGrad.addColorStop(1, '#ffffff');
-                ctx.fillStyle = skyGrad;
-                ctx.fillRect(0, 0, w, groundY);
-
-                ctx.fillStyle = '#fef08a';
-                clouds.forEach(cloud => {
-                    cloud.x += cloud.speed;
-                    if (cloud.x > w + 100) cloud.x = -120;
-                    drawPixelCloud(ctx, cloud.x, cloud.y, cloud.size);
-                });
-
-                // Holy Ground
-                ctx.fillStyle = '#f59e0b';
-                ctx.fillRect(0, groundY, w, 52);
-                ctx.fillStyle = '#fbbf24';
-                ctx.fillRect(0, groundY, w, 12);
-                ctx.fillStyle = '#fcd34d';
-                for (let x = 0; x < w; x += 16) {
-                    ctx.fillRect(x, groundY - 6, 8, 6);
-                }
+            if (isHeaven) {
+                // Golden Heavenly Sky
+                skyGrad.addColorStop(0, '#fef08a');
+                skyGrad.addColorStop(0.5, '#fde047');
+                skyGrad.addColorStop(1, '#eab308');
+            } else if (heightLevel < 25) {
+                skyGrad.addColorStop(0, '#1e3a8a');
+                skyGrad.addColorStop(0.6, '#38bdf8');
+                skyGrad.addColorStop(1, '#bae6fd');
+            } else if (heightLevel < 60) {
+                skyGrad.addColorStop(0, '#31104b');
+                skyGrad.addColorStop(0.5, '#7c2d12');
+                skyGrad.addColorStop(1, '#f59e0b');
             } else {
-                // Normal Lands
-                if (heightLevel < 25) {
-                    skyGrad.addColorStop(0, '#1e3a8a');
-                    skyGrad.addColorStop(0.6, '#38bdf8');
-                    skyGrad.addColorStop(1, '#bae6fd');
-                } else if (heightLevel < 60) {
-                    skyGrad.addColorStop(0, '#31104b');
-                    skyGrad.addColorStop(0.5, '#7c2d12');
-                    skyGrad.addColorStop(1, '#f59e0b');
-                } else {
-                    skyGrad.addColorStop(0, '#030712');
-                    skyGrad.addColorStop(0.7, '#090d16');
-                    skyGrad.addColorStop(1, '#1e1b4b');
-                }
-                
-                ctx.fillStyle = skyGrad;
-                ctx.fillRect(0, 0, w, groundY);
+                skyGrad.addColorStop(0, '#030712');
+                skyGrad.addColorStop(0.7, '#090d16');
+                skyGrad.addColorStop(1, '#1e1b4b');
+            }
+            
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, w, groundY);
 
-                if (heightLevel >= 40) {
-                    ctx.fillStyle = '#ffffff';
-                    for (let i = 0; i < 30; i++) {
-                        const sx = (i * 47) % w;
-                        const sy = (i * 29) % Math.max(1, groundY - 100);
-                        ctx.fillRect(sx, sy, 2, 2);
-                    }
-                }
-
+            if (!isHeaven && heightLevel >= 40) {
                 ctx.fillStyle = '#ffffff';
-                clouds.forEach(cloud => {
-                    cloud.x += cloud.speed;
-                    if (cloud.x > w + 100) cloud.x = -120;
-                    drawPixelCloud(ctx, cloud.x, cloud.y, cloud.size);
-                });
-
-                ctx.fillStyle = '#78350f';
-                ctx.fillRect(0, groundY, w, 52);
-                ctx.fillStyle = '#15803d';
-                ctx.fillRect(0, groundY, w, 12);
-                ctx.fillStyle = '#22c55e';
-                for (let x = 0; x < w; x += 16) {
-                    ctx.fillRect(x, groundY - 6, 8, 6);
+                for (let i = 0; i < 30; i++) {
+                    const sx = (i * 47) % w;
+                    const sy = (i * 29) % Math.max(1, groundY - 100);
+                    ctx.fillRect(sx, sy, 2, 2);
                 }
+            }
+
+            ctx.fillStyle = isHeaven ? '#ffffff' : '#ffffff';
+            clouds.forEach(cloud => {
+                cloud.x += cloud.speed;
+                if (cloud.x > w + 100) cloud.x = -120;
+                drawPixelCloud(ctx, cloud.x, cloud.y, cloud.size);
+            });
+
+            // Ground & Grass
+            ctx.fillStyle = isHeaven ? '#ca8a04' : '#78350f';
+            ctx.fillRect(0, groundY, w, 52);
+
+            ctx.fillStyle = isHeaven ? '#fef08a' : '#15803d';
+            ctx.fillRect(0, groundY, w, 12);
+
+            ctx.fillStyle = isHeaven ? '#facc15' : '#22c55e';
+            for (let x = 0; x < w; x += 16) {
+                ctx.fillRect(x, groundY - 6, 8, 6);
             }
         }
 
@@ -1041,6 +1023,7 @@
             const centerX = Math.floor(w / 2);
             const groundY = h - 52;
             const currentLand = getCurrentLandData();
+            const landInfo = getLandInfo(gameState.currentLandIndex);
             const heightLevel = getBeanstalkHeight(currentLand);
 
             const maxLevel = 80;
@@ -1061,14 +1044,10 @@
             let topY = groundY;
             let topSegThickness = rootThickness;
 
-            // Make Heaven beanstalk distinct (Golden Hue)
-            const isHeaven = (currentLand.id === 6);
-
             for (let i = 0; i < segments; i++) {
                 const segY = groundY - (i * segmentHeight);
                 const curveOffset = Math.sin(i * 0.08) * (w * 0.05 * progressRatio);
                 const segCenterX = Math.floor(centerX + curveOffset);
-
                 const progress = i / Math.max(1, segments - 1);
                 const segThickness = Math.max(12, Math.floor(rootThickness * (1 - progress * 0.5)));
 
@@ -1078,40 +1057,28 @@
                     topSegThickness = segThickness;
                 }
 
-                if (isHeaven) {
-                    ctx.fillStyle = (i % 2 === 0) ? '#eab308' : '#ca8a04';
-                } else {
-                    ctx.fillStyle = (i % 2 === 0) ? '#15803d' : '#166534';
-                }
-                
+                ctx.fillStyle = (i % 2 === 0) ? '#15803d' : '#166534';
                 ctx.fillRect(segCenterX - Math.floor(segThickness / 2), segY - segmentHeight, segThickness, segmentHeight + 1);
 
                 const edgeWidth = Math.max(3, Math.floor(segThickness * 0.12));
-                
-                if (isHeaven) {
-                    ctx.fillStyle = '#fde047';
-                    ctx.fillRect(segCenterX - Math.floor(segThickness / 2) + 2, segY - segmentHeight, edgeWidth, segmentHeight + 1);
-                    ctx.fillStyle = '#713f12';
-                    ctx.fillRect(segCenterX + Math.floor(segThickness / 2) - edgeWidth, segY - segmentHeight, edgeWidth, segmentHeight + 1);
-                } else {
-                    ctx.fillStyle = '#22c55e';
-                    ctx.fillRect(segCenterX - Math.floor(segThickness / 2) + 2, segY - segmentHeight, edgeWidth, segmentHeight + 1);
-                    ctx.fillStyle = '#052e16';
-                    ctx.fillRect(segCenterX + Math.floor(segThickness / 2) - edgeWidth, segY - segmentHeight, edgeWidth, segmentHeight + 1);
-                }
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(segCenterX - Math.floor(segThickness / 2) + 2, segY - segmentHeight, edgeWidth, segmentHeight + 1);
+
+                ctx.fillStyle = '#052e16';
+                ctx.fillRect(segCenterX + Math.floor(segThickness / 2) - edgeWidth, segY - segmentHeight, edgeWidth, segmentHeight + 1);
 
                 if (i > 0 && i % 4 === 0) {
                     const isLeft = (i % 8 === 0);
                     const leafWidth = Math.min(40, Math.max(10, Math.floor(segThickness * 0.4)));
                     const leafX = isLeft ? segCenterX - Math.floor(segThickness / 2) - leafWidth : segCenterX + Math.floor(segThickness / 2);
                     
-                    ctx.fillStyle = isHeaven ? '#fde047' : '#22c55e';
+                    ctx.fillStyle = '#22c55e';
                     ctx.fillRect(leafX, segY - 8, leafWidth, 8);
                 }
             }
 
             if (targetPixelHeight < maxPixelHeight && Number.isFinite(topY) && Number.isFinite(topSegThickness)) {
-                drawCurvedConeTip(ctx, topCenterX, topY, topSegThickness, segments, w, progressRatio, isHeaven);
+                drawCurvedConeTip(ctx, topCenterX, topY, topSegThickness, segments, w, progressRatio);
             }
 
             ctx.fillStyle = '#ffffff';
@@ -1120,14 +1087,12 @@
             ctx.shadowColor = '#000000';
             ctx.shadowBlur = 4;
             const hudY = (targetPixelHeight < maxPixelHeight && Number.isFinite(topY)) ? Math.max(40, topY - 30) : 80;
-            
-            const currentLandInfo = getLandInfo(gameState.currentLandIndex);
-            ctx.fillText(`[${currentLandInfo.name} 콩나무 높이: ${heightLevel}m]`, centerX, hudY);
+            ctx.fillText(`[${landInfo.name} 콩나무 높이: ${heightLevel}m]`, centerX, hudY);
 
             ctx.restore();
         }
 
-        function drawCurvedConeTip(ctx, startX, startY, baseThickness, startSegmentIndex, w, progressRatio, isHeaven) {
+        function drawCurvedConeTip(ctx, startX, startY, baseThickness, startSegmentIndex, w, progressRatio) {
             ctx.save();
             const tipSteps = Math.max(10, Math.floor(baseThickness * 0.8));
             const stepHeight = 3;
@@ -1140,11 +1105,7 @@
                 const segY = Math.floor(startY - (step * stepHeight));
                 const currentThickness = Math.max(2, Math.floor(baseThickness * Math.pow(1 - t, 1.3)));
 
-                if (isHeaven) {
-                    ctx.fillStyle = (step % 2 === 0) ? '#ca8a04' : '#fde047';
-                } else {
-                    ctx.fillStyle = (step % 2 === 0) ? '#15803d' : '#22c55e';
-                }
+                ctx.fillStyle = (step % 2 === 0) ? '#15803d' : '#22c55e';
                 ctx.fillRect(segCenterX - Math.floor(currentThickness / 2), segY - stepHeight, currentThickness, stepHeight + 1);
             }
             ctx.restore();
@@ -1169,12 +1130,8 @@
         }
 
         function buyNextLand() {
-            if (gameState.lands.length >= 5 && !gameState.elevatorPurchased) {
-                openModal("구매 제한", "기본 땅은 최대 5개까지만 보유할 수 있습니다.<br>이후에는 엘리베이터를 통해 천국으로 향하세요!");
-                return;
-            }
-            if (gameState.lands.length >= 6) {
-                openModal("확장 완료", "더 이상 새로운 땅을 구매할 수 없습니다.");
+            if (gameState.lands.length >= 5) {
+                openModal("구매 제한", "기존 땅은 최대 5개까지만 구매할 수 있습니다.<br>땅 5의 콩나무를 100m까지 키워 <b>천국행 엘리베이터</b>를 설치하세요!");
                 return;
             }
             const nextLandIndex = gameState.lands.length;
@@ -1196,6 +1153,82 @@
                 openModal("땅 구매 성공!", `${nextInfo.name}을(를) 새로 구매했습니다!<br>수확 효율 <b>x${nextInfo.multiplier}배</b>가 적용됩니다.`);
                 updateUI();
             }
+        }
+
+        function buyElevator() {
+            const elevatorCost = 5000000000; // 5 Billion Gold
+            if (gameState.hasElevator) return;
+            
+            if (gameState.gold >= elevatorCost) {
+                gameState.gold -= elevatorCost;
+                gameState.hasElevator = true;
+                
+                // Add Heaven Land (Land 6) if not unlocked
+                if (!gameState.lands.find(l => l.id === 6)) {
+                    gameState.lands.push({
+                        id: 6,
+                        workerCount: 1,
+                        workerYieldLevel: 1,
+                        workerSpeedLevel: 1,
+                        totalLandGold: 0
+                    });
+                }
+                
+                gameState.currentLandIndex = gameState.lands.length - 1; // Go to Heaven
+                syncActiveWorkers();
+                playSound('upgrade');
+                openModal("천국 진입 성공!", "축하합니다! 천국행 엘리베이터를 설치했습니다!<br>천국에서는 수확 효율이 <b>1.5배(x615.1)</b>로 대폭 증가하며, <b>황금알 거위 뽑기</b>를 이용할 수 있습니다!");
+                updateUI();
+            } else {
+                openModal("골드 부족", `엘리베이터 설치 비용이 부족합니다.<br>필요 골드: ₩${formatNumber(elevatorCost)}`);
+            }
+        }
+
+        function openGachaModal() {
+            if (!gameState.hasElevator) {
+                openModal("미해금", "천국에 진입한 유저만 거위 뽑기를 이용할 수 있습니다.");
+                return;
+            }
+            ensureAudioContext();
+            playSound('click');
+            document.getElementById('goose-count-display').innerText = `${gameState.gooseCount}마리`;
+            document.getElementById('gacha-modal').classList.remove('hidden');
+        }
+
+        function closeGachaModal() {
+            document.getElementById('gacha-modal').classList.add('hidden');
+        }
+
+        function pullGacha(times) {
+            const costPerPull = 1000000000; // 1 Billion Gold per pull
+            const totalCost = costPerPull * times;
+
+            if (gameState.gold < totalCost) {
+                document.getElementById('gacha-result-box').innerHTML = `<span class="text-red-400">골드가 부족합니다! (필요: ₩${formatNumber(totalCost)})</span>`;
+                return;
+            }
+
+            gameState.gold -= totalCost;
+            let successCount = 0;
+
+            for (let i = 0; i < times; i++) {
+                // 0.01% Probability = 0.0001
+                if (Math.random() < 0.0001) {
+                    successCount++;
+                }
+            }
+
+            if (successCount > 0) {
+                gameState.gooseCount += successCount;
+                playSound('upgrade');
+                document.getElementById('gacha-result-box').innerHTML = `<span class="text-yellow-300 font-bold">🎉 대성공! 황금알을 낳는 거위 ${successCount}마리 획득! 🎉</span>`;
+            } else {
+                playSound('click');
+                document.getElementById('gacha-result-box').innerHTML = `<span class="text-neutral-400">아쉽게도 거위를 뽑지 못했습니다... (0.01% 확률)</span>`;
+            }
+
+            document.getElementById('goose-count-display').innerText = `${gameState.gooseCount}마리`;
+            updateUI();
         }
 
         function hireWorker() {
@@ -1237,56 +1270,6 @@
             }
         }
 
-        // NEW FEATURE: Buy Elevator
-        function buyElevator() {
-            const cost = 1000000000; // 1 Billion (1.00B)
-            if (gameState.gold >= cost && !gameState.elevatorPurchased) {
-                gameState.gold -= cost;
-                gameState.elevatorPurchased = true;
-                
-                // Unlock Heaven (Land 6)
-                gameState.lands.push({
-                    id: 6,
-                    workerCount: 1,
-                    workerYieldLevel: 1,
-                    workerSpeedLevel: 1,
-                    totalLandGold: 0
-                });
-                gameState.currentLandIndex = 5; // Go directly to Heaven
-                syncActiveWorkers();
-                playSound('upgrade');
-                openModal("천국 도착!", "엘리베이터를 타고 천국에 도착했습니다!<br>이제 1.5배의 효율과 뽑기를 즐기세요.");
-                updateUI();
-            }
-        }
-
-        // NEW FEATURE: Gacha
-        function pullGacha(times) {
-            const costPerPull = 10000000; // 10M per pull
-            const totalCost = costPerPull * times;
-            
-            if (gameState.gold >= totalCost) {
-                gameState.gold -= totalCost;
-                
-                let successCount = 0;
-                // 0.01% chance logic (1 in 10,000)
-                for (let i = 0; i < times; i++) {
-                    if (Math.random() < 0.0001) {
-                        successCount++;
-                    }
-                }
-                
-                if (successCount > 0) {
-                    gameState.gooseCount = (gameState.gooseCount || 0) + successCount;
-                    openModal("당첨!! 🎉", `0.01%의 확률을 뚫고 <b>황금알을 낳는 거위</b> ${successCount}마리를 얻었습니다!<br>거위는 천국에 배치되어 1초당 20M의 골드를 생산합니다.`);
-                    playSound('upgrade');
-                } else {
-                    playSound('click'); // Regular click for fail to avoid spamming annoying sounds
-                }
-                updateUI();
-            }
-        }
-
         function openShop() {
             ensureAudioContext();
             playSound('click');
@@ -1318,30 +1301,14 @@
         }
 
         function confirmReset() {
-            openModal("전체 데이터 초기화", "모든 세이브 데이터 및 구매한 땅이 삭제됩니다. 진행할까요?");
-            
-            const container = document.getElementById('modal-actions');
-            container.innerHTML = '';
-
-            const yesBtn = document.createElement('button');
-            yesBtn.className = 'pixel-btn-mono px-5 py-2 rounded text-xs';
-            yesBtn.innerText = '네, 초기화합니다';
-            yesBtn.onclick = () => {
-                localStorage.removeItem('zec_beanstalk_v3_save');
-                location.reload();
-            };
-            
-            const noBtn = document.createElement('button');
-            noBtn.className = 'pixel-btn-white px-5 py-2 rounded text-xs';
-            noBtn.innerText = '취소';
-            noBtn.onclick = closeModal;
-
-            container.appendChild(yesBtn);
-            container.appendChild(noBtn);
+            openModal("전체 데이터 초기화", "모든 세이브 데이터 및 땅/거위 데이터가 삭제됩니다. 진행할까요?");
+            localStorage.removeItem('zec_beanstalk_v3_save');
+            setTimeout(() => location.reload(), 1000);
         }
 
         function formatNumber(num) {
             if (!Number.isFinite(num) || num < 0) return '0';
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
             if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
             if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
             if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
@@ -1357,15 +1324,19 @@
             document.getElementById('gold-display').innerText = `₩${formatNumber(gameState.gold)}`;
             document.getElementById('gps-display').innerText = `+₩${formatNumber(getTotalGoldPerSecond())}/초`;
 
+            // Gacha Header Button Toggle
+            const gachaHeaderBtn = document.getElementById('gacha-btn-header');
+            if (gachaHeaderBtn) {
+                if (gameState.hasElevator) gachaHeaderBtn.classList.remove('hidden');
+                else gachaHeaderBtn.classList.add('hidden');
+            }
+
             // Update Land Switcher Bar
             document.getElementById('current-land-title').innerText = `${currentLandInfo.name} (x${currentLandInfo.multiplier} 효율)`;
             
-            // Check if heaven is selected to show correct sub-text
-            let landProdText = `현재 땅 생산: +₩${formatNumber(getLandGPS(currentLand))}/초`;
-            if (currentLandInfo.id === 6 && gameState.gooseCount > 0) {
-                landProdText += ` (+거위 ₩${formatNumber(gameState.gooseCount * 20000000)}/초)`;
-            }
-            document.getElementById('land-gps-sub').innerText = landProdText;
+            let currentLandGPS = getLandGPS(currentLand);
+            if (currentLand.id === 6) currentLandGPS += getGeeseGPS();
+            document.getElementById('land-gps-sub').innerText = `현재 땅 생산: +₩${formatNumber(currentLandGPS)}/초`;
             
             const prevBtn = document.getElementById('prev-land-btn');
             const nextBtn = document.getElementById('next-land-btn');
@@ -1380,23 +1351,33 @@
             // Shop UI Updates
             document.getElementById('active-land-badge').innerText = `[${currentLandInfo.name} 관리 중]`;
 
+            // Check Elevator condition: In Land 5 AND Land 5 Beanstalk >= 100m AND Elevator NOT yet installed
+            const land5 = gameState.lands.find(l => l.id === 5);
+            const land5Height = land5 ? getBeanstalkHeight(land5) : 0;
+            const elevatorCard = document.getElementById('elevator-shop-card');
+            
+            if (elevatorCard) {
+                if (gameState.currentLandIndex === 4 && land5Height >= 100 && !gameState.hasElevator) {
+                    elevatorCard.classList.remove('hidden');
+                    const buyEleBtn = document.getElementById('buy-elevator-btn');
+                    if (buyEleBtn) buyEleBtn.disabled = gameState.gold < 5000000000;
+                } else {
+                    elevatorCard.classList.add('hidden');
+                }
+            }
+
             // Next Land Purchase Info in Shop
-            const nextLandIdx = gameState.lands.length;
+            const buyLandCard = document.getElementById('buy-land-card');
+            const nextLandIdx = gameState.lands.filter(l => l.id <= 5).length;
             const buyLandBtn = document.getElementById('buy-land-btn');
             const nextLandNameEl = document.getElementById('next-land-name');
             const nextLandMultEl = document.getElementById('next-land-mult');
             const nextLandCostEl = document.getElementById('next-land-cost');
 
             if (nextLandIdx >= 5) {
-                // If max normal lands are bought, stop normal purchase
-                if (nextLandNameEl) nextLandNameEl.innerText = "땅 확장 완료 (기본 5개)";
-                if (nextLandMultEl) nextLandMultEl.innerText = "MAX";
-                if (nextLandCostEl) nextLandCostEl.innerText = "0";
-                if (buyLandBtn) {
-                    buyLandBtn.innerText = "최대 보유 완료";
-                    buyLandBtn.disabled = true;
-                }
+                if (buyLandCard) buyLandCard.classList.add('hidden');
             } else {
+                if (buyLandCard) buyLandCard.classList.remove('hidden');
                 const nextLandInfo = getLandInfo(nextLandIdx);
                 if (nextLandNameEl) nextLandNameEl.innerText = nextLandInfo.name;
                 if (nextLandMultEl) nextLandMultEl.innerText = `x${nextLandInfo.multiplier}배`;
@@ -1407,140 +1388,148 @@
                 }
             }
 
-            // Reconstruct Missing Shop Parts
-            
             // Worker Hire
             const wCost = getWorkerCost(currentLand);
             document.getElementById('worker-count').innerText = `${currentLand.workerCount} / 25명`;
-            document.getElementById('worker-cost').innerText = formatNumber(wCost.cost);
             const buyWorkerBtn = document.getElementById('buy-worker-btn');
-            if (buyWorkerBtn) {
-                buyWorkerBtn.disabled = wCost.count === 0 || gameState.gold < wCost.cost;
+            
+            if (currentLand.workerCount >= 25) {
+                buyWorkerBtn.innerText = '최대 고용 완료 (25/25)';
+                buyWorkerBtn.disabled = true;
+            } else {
+                buyWorkerBtn.innerHTML = `고용 (₩<span id="worker-cost">${formatNumber(wCost.cost)}</span>)`;
+                buyWorkerBtn.disabled = gameState.gold < wCost.cost;
             }
 
             // Yield Upgrade
-            const yCost = getYieldCost(currentLand);
+            const yieldCost = getYieldCost(currentLand);
             document.getElementById('yield-lvl').innerText = `Lv.${currentLand.workerYieldLevel}`;
             document.getElementById('yield-val').innerText = `₩${formatNumber(getSingleWorkerHarvestYield(currentLand))}`;
-            document.getElementById('yield-cost').innerText = formatNumber(yCost.cost);
+            const yieldCostEl = document.getElementById('yield-cost');
+            if (yieldCostEl) yieldCostEl.innerText = formatNumber(yieldCost.cost);
             const upgYieldBtn = document.getElementById('upg-yield-btn');
-            if (upgYieldBtn) {
-                upgYieldBtn.disabled = yCost.count === 0 || gameState.gold < yCost.cost;
-            }
+            if (upgYieldBtn) upgYieldBtn.disabled = gameState.gold < yieldCost.cost;
 
             // Speed Upgrade
-            const sCost = getSpeedCost(currentLand);
-            document.getElementById('spd-lvl').innerText = `Lv.${currentLand.workerSpeedLevel}`;
-            const spdSec = Math.max(0.15, 1.0 - (currentLand.workerSpeedLevel - 1) * 0.05);
-            document.getElementById('spd-val').innerText = `${spdSec.toFixed(2)}초`;
-            document.getElementById('spd-cost').innerText = formatNumber(sCost.cost);
+            const spdCost = getSpeedCost(currentLand);
+            document.getElementById('spd-lvl').innerText = `Lv.${currentLand.workerSpeedLevel}${currentLand.workerSpeedLevel >= 18 ? ' (MAX)' : ''}`;
+            document.getElementById('spd-val').innerText = `${Math.max(0.15, (1 - (currentLand.workerSpeedLevel - 1) * 0.05)).toFixed(2)}초`;
             const upgSpeedBtn = document.getElementById('upg-speed-btn');
             if (upgSpeedBtn) {
-                upgSpeedBtn.disabled = sCost.count === 0 || gameState.gold < sCost.cost;
-            }
-
-            // --- NEW FEATURES UI TOGGLES ---
-            const elevatorSec = document.getElementById('elevator-section');
-            const gachaSec = document.getElementById('gacha-section');
-
-            // Elevator Section logic
-            if (elevatorSec) {
-                // Show only on Land 5 (id 5), if height >= 100, and not yet purchased
-                if (currentLandInfo.id === 5) {
-                    const h = getBeanstalkHeight(currentLand);
-                    if (h >= 100 && !gameState.elevatorPurchased) {
-                        elevatorSec.classList.remove('hidden');
-                        elevatorSec.classList.add('flex');
-                        const elBtn = document.getElementById('buy-elevator-btn');
-                        if (elBtn) elBtn.disabled = gameState.gold < 1000000000;
-                    } else {
-                        elevatorSec.classList.add('hidden');
-                        elevatorSec.classList.remove('flex');
-                    }
+                if (currentLand.workerSpeedLevel >= 18) {
+                    upgSpeedBtn.innerText = '최대 강화 완료 (0.15초)';
+                    upgSpeedBtn.disabled = true;
                 } else {
-                    elevatorSec.classList.add('hidden');
-                    elevatorSec.classList.remove('flex');
-                }
-            }
-
-            // Gacha Section logic
-            if (gachaSec) {
-                // Show only in Heaven (id 6)
-                if (currentLandInfo.id === 6) {
-                    gachaSec.classList.remove('hidden');
-                    gachaSec.classList.add('flex');
-                    document.getElementById('goose-count-display').innerText = gameState.gooseCount || 0;
-                    
-                    const gacha1 = document.getElementById('gacha-btn-1');
-                    const gacha100 = document.getElementById('gacha-btn-100');
-                    if (gacha1) gacha1.disabled = gameState.gold < 10000000;
-                    if (gacha100) gacha100.disabled = gameState.gold < 1000000000;
-                } else {
-                    gachaSec.classList.add('hidden');
-                    gachaSec.classList.remove('flex');
+                    upgSpeedBtn.innerHTML = `강화 (₩<span id="spd-cost">${formatNumber(spdCost.cost)}</span>)`;
+                    upgSpeedBtn.disabled = gameState.gold < spdCost.cost || spdCost.count === 0;
                 }
             }
         }
 
-        // SAVE & LOAD LOGIC
         const SAVE_KEY = 'zec_beanstalk_v3_save';
-        function saveData() {
+
+        function saveGame() {
             gameState.lastSaveTime = Date.now();
             localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
         }
 
-        function loadData() {
+        function loadGame() {
             const saved = localStorage.getItem(SAVE_KEY);
+            let timeDiffSec = 0;
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
                     Object.assign(gameState, parsed);
-                } catch(e) {
-                    console.error("Save load failed", e);
+                    if (gameState.lastSaveTime) {
+                        timeDiffSec = Math.floor((Date.now() - gameState.lastSaveTime) / 1000);
+                    }
+                } catch (e) {
+                    console.error("Save load error", e);
                 }
             }
             sanitizeGameState();
-            syncActiveWorkers();
-        }
 
-        // MAIN GAME LOOP
-        let lastTime = 0;
-        function gameLoop(timestamp) {
-            requestAnimationFrame(gameLoop);
-            const dt = timestamp - lastTime;
-            lastTime = timestamp;
+            // Offline Rewards (up to 24h)
+            if (timeDiffSec > 5) {
+                timeDiffSec = Math.min(timeDiffSec, 86400); 
+                const totalGPS = getTotalGoldPerSecond();
+                if (totalGPS > 0) {
+                    const offlineGold = totalGPS * timeDiffSec;
+                    gameState.gold += offlineGold;
+                    gameState.totalGold += offlineGold;
+                    
+                    gameState.lands.forEach(land => {
+                        let landGPS = getLandGPS(land);
+                        if (land.id === 6) landGPS += getGeeseGPS();
+                        land.totalLandGold += landGPS * timeDiffSec;
+                    });
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            drawBackgroundAndClouds(ctx, canvas.width, canvas.height);
-            drawSmoothBeanstalk(ctx, canvas.width, canvas.height);
-            
-            activeWorkers.forEach(w => {
-                w.update(canvas.width, canvas.height);
-                w.draw(ctx, canvas.height);
-            });
-            
-            // Render Geese if in Heaven
-            if (gameState.currentLandIndex === 5 && gameState.gooseCount > 0) {
-                syncGeese();
-                const groundY = canvas.height - 52;
-                activeGeese.forEach(g => {
-                    g.update(canvas.width);
-                    g.draw(ctx, groundY);
-                });
+                    setTimeout(() => {
+                        openModal("방치형 보상 도착!", `자리 비움 시간: <b>${timeDiffSec}초</b><br>쉬는 동안 <b>₩${formatNumber(offlineGold)}</b>의 수입을 획득했습니다!`);
+                    }, 500);
+                }
             }
-            
-            updateAndDrawParticles(ctx);
-            updateGeesePassiveIncome();
         }
 
-        // Bootstrap the game
-        loadData();
-        setInterval(saveData, 5000);
-        setInterval(updateUI, 1000);
-        updateUI();
-        requestAnimationFrame(gameLoop);
+        setInterval(() => saveGame(), 10000);
 
+        let lastAutoTick = Date.now();
+
+        function gameLoop() {
+            try {
+                const now = Date.now();
+                const delta = (now - lastAutoTick) / 1000;
+                
+                if (delta >= 0.1) {
+                    // Collect background income for all unlocked lands
+                    gameState.lands.forEach(land => {
+                        let landGps = getLandGPS(land);
+                        if (land.id === 6) landGps += getGeeseGPS(); // Golden Geese Passive Income in Heaven
+                        
+                        const earned = landGps * delta;
+                        if (earned > 0) {
+                            addGold(earned, land);
+                        }
+                    });
+                    lastAutoTick = now;
+                }
+
+                drawBackgroundAndClouds(ctx, canvas.width, canvas.height);
+                drawSmoothBeanstalk(ctx, canvas.width, canvas.height);
+
+                const currentLand = getCurrentLandData();
+
+                // Draw Golden Geese if in Heaven
+                if (currentLand.id === 6 && gameState.gooseCount > 0) {
+                    syncGeese();
+                    const groundY = canvas.height - 52;
+                    activeGeese.forEach(g => {
+                        g.update(canvas.width);
+                        g.draw(ctx, groundY);
+                    });
+                }
+
+                // Draw Workers
+                activeWorkers.forEach(worker => {
+                    worker.update(canvas.width, canvas.height);
+                    worker.draw(ctx, canvas.height);
+                });
+
+                updateAndDrawParticles(ctx);
+            } catch (err) {
+                console.error("Game loop error:", err);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = function () {
+            resizeCanvas();
+            loadGame();
+            syncActiveWorkers();
+            updateUI();
+            gameLoop();
+        };
     </script>
 </body>
 </html>
