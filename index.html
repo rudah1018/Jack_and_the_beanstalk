@@ -331,11 +331,11 @@
                 <div class="grid grid-cols-2 gap-3 pt-2">
                     <button onclick="pullGacha(1)" class="pixel-btn-gold p-3 rounded text-xs flex flex-col items-center justify-center gap-1">
                         <span>1회 뽑기</span>
-                        <span class="text-[10px] text-black/80">₩500M</span>
+                        <span class="text-[10px] text-black/80">₩250M</span>
                     </button>
                     <button onclick="pullGacha(10)" class="pixel-btn-gold p-3 rounded text-xs flex flex-col items-center justify-center gap-1">
                         <span>10회 연속 뽑기</span>
-                        <span class="text-[10px] text-black/80">₩5.00B</span>
+                        <span class="text-[10px] text-black/80">₩2.50B</span>
                     </button>
                 </div>
             </div>
@@ -1231,7 +1231,7 @@
         }
 
         function pullGacha(times) {
-            const costPerPull = 500000000; // 500 Million Gold per pull (500M)
+            const costPerPull = 250000000; // 250 Million Gold per pull (250M)
             const totalCost = costPerPull * times;
 
             if (gameState.gold < totalCost) {
