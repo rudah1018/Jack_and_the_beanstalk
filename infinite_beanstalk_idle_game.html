@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>무한의 콩나무 - 2D 픽셀 방치형 게임</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Pixel Font (DungGeunMo) -->
+    <link href="https://fonts.googleapis.com/css2?family=DungGeunMo&display=swap" rel="stylesheet">
+    
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000000;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        * {
+            font-family: 'DungGeunMo', monospace, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        canvas {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            display: block;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Strict Retro Monochrome Button Styles */
+        .pixel-btn-mono {
+            border: 2px solid #ffffff;
+            background-color: #000000;
+            color: #ffffff;
+            box-shadow: inset -2px -2px 0px 0px #404040, inset 2px 2px 0px 0px #888888;
+            transition: transform 0.05s ease;
+        }
+        .pixel-btn-mono:hover:not(:disabled) {
+            background-color: #262626;
+            color: #ffffff;
+        }
+        .pixel-btn-mono:active:not(:disabled) {
+            transform: translate(2px, 2px);
+        }
+        .pixel-btn-mono:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            border-color: #525252;
+            color: #a3a3a3;
+            background-color: #121212;
+        }
+
+        .pixel-btn-white {
+            border: 2px solid #000000;
+            background-color: #ffffff;
+            color: #000000;
+            font-weight: bold;
+            box-shadow: inset -2px -2px 0px 0px #a3a3a3, inset 2px 2px 0px 0px #ffffff;
+            transition: transform 0.05s ease;
+        }
+        .pixel-btn-white:hover:not(:disabled) {
+            background-color: #e5e5e5;
+        }
+        .pixel-btn-white:active:not(:disabled) {
+            transform: translate(2px, 2px);
+        }
+
+        .pixel-box-mono {
+            border: 3px solid #ffffff;
+            background-color: #000000;
+            box-shadow: 4px 4px 0px #404040;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ffffff;
+            border: 1px solid #000000;
+        }
+    </style>
+</head>
+<body class="bg-black text-neutral-100 fixed inset-0 overflow-hidden select-none">
+
+    <!-- Full Screen Farm Canvas -->
+    <canvas id="game-canvas" class="absolute inset-0 w-full h-full cursor-pointer touch-none z-0 block"></canvas>
+
+    <!-- Top Navigation HUD -->
+    <header class="absolute top-0 left-0 right-0 z-30 p-3 sm:p-4 pointer-events-none">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            
+            <!-- Logo & Stats Dashboard -->
+            <div class="pointer-events-auto bg-black/95 border-2 border-white p-2 sm:p-3 rounded-lg shadow-2xl flex items-center gap-3">
+                <div class="w-10 h-10 bg-neutral-900 border border-white rounded flex flex-col items-center justify-center font-black text-white shrink-0">
+                    <i class="fa-solid fa-seedling text-base"></i>
+                    <span class="text-[9px]">콩나무</span>
+                </div>
+                <div>
+                    <div class="text-[10px] text-neutral-400">전체 골드 / 총 초당 수확량</div>
+                    <div class="flex items-center gap-2">
+                        <span id="gold-display" class="text-lg sm:text-xl font-bold text-white tracking-wide">₩10</span>
+                        <span id="gps-display" class="text-xs text-neutral-400 font-normal border-l border-neutral-700 pl-2">+₩0.0/초</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Controls & Shop Trigger -->
+            <div class="pointer-events-auto flex items-center gap-2">
+                <!-- Open Shop Button -->
+                <button onclick="openShop()" class="pixel-btn-white px-4 py-2.5 rounded text-xs sm:text-sm font-black flex items-center gap-2 shadow-lg">
+                    <i class="fa-solid fa-store text-base"></i>
+                    <span>상점 (땅 & 강화)</span>
+                </button>
+
+                <!-- Sound Toggle Button -->
+                <button id="sound-btn" onclick="toggleSound()" class="pixel-btn-mono p-2.5 rounded text-xs flex items-center gap-1.5">
+                    <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+                    <span id="sound-label" class="text-[10px] hidden sm:inline">BGM ON</span>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Land Switcher Control Bar -->
+    <div class="absolute top-20 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex items-center gap-2 bg-black/95 border-2 border-white p-1.5 px-3 rounded-lg shadow-2xl">
+        <button onclick="prevLand()" id="prev-land-btn" class="pixel-btn-mono px-2 py-1 text-xs rounded font-bold">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <div class="text-center px-2 min-w-[130px]">
+            <div id="current-land-title" class="text-xs sm:text-sm font-bold text-white">땅 1 (x1.0 효율)</div>
+            <div id="land-gps-sub" class="text-[10px] text-neutral-400">현재 땅 생산: +₩0/초</div>
+        </div>
+        <button onclick="nextLand()" id="next-land-btn" class="pixel-btn-mono px-2 py-1 text-xs rounded font-bold">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    </div>
+
+    <!-- Floating Interactive Hint HUD -->
+    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none bg-black/95 border border-white px-4 py-2 rounded-full text-xs text-neutral-200 flex items-center gap-2 shadow-xl text-center whitespace-nowrap">
+        <i class="fa-solid fa-hand-pointer text-white"></i> 화면을 터치해 수확하거나 화살표로 다른 땅을 관리하세요!
+    </div>
+
+    <!-- SHOP MODAL (Monochrome Theme) -->
+    <div id="shop-modal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+        <div class="pixel-box-mono w-full max-w-lg max-h-[90vh] flex flex-col rounded-lg overflow-hidden shadow-2xl border-2 border-white">
+            
+            <!-- Shop Modal Header -->
+            <div class="bg-neutral-950 border-b-2 border-white p-3 sm:p-4 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-white font-bold text-base sm:text-lg">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    <span>상점: 땅 관리 & 강화</span>
+                </div>
+                <button onclick="closeShop()" class="pixel-btn-mono px-3 py-1 text-xs rounded">
+                    <i class="fa-solid fa-xmark"></i> 닫기
+                </button>
+            </div>
+
+            <!-- Shop Buy Multiplier Bar -->
+            <div class="bg-black border-b border-neutral-800 p-2 px-4 flex items-center justify-between text-xs">
+                <span id="active-land-badge" class="text-white font-bold">[땅 1 관리 중]</span>
+                <div class="flex items-center gap-1">
+                    <span class="text-neutral-400 text-[11px] mr-1">수량:</span>
+                    <button onclick="setBuyMultiplier(1)" id="buy-x1" class="pixel-btn-white px-2.5 py-1 text-[11px] rounded">x1</button>
+                    <button onclick="setBuyMultiplier(10)" id="buy-x10" class="pixel-btn-mono px-2.5 py-1 text-[11px] rounded">x10</button>
+                    <button onclick="setBuyMultiplier('max')" id="buy-max" class="pixel-btn-mono px-2.5 py-1 text-[11px] rounded">MAX</button>
+                </div>
+            </div>
+
+            <!-- Shop Content Area -->
+            <div class="p-4 overflow-y-auto flex-1 space-y-4 bg-black text-neutral-200">
+                
+                <!-- 0. Buy New Land Section -->
+                <div class="border-2 border-amber-400 bg-neutral-950 p-3 rounded flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <div class="w-10 h-10 border border-amber-400 bg-black flex items-center justify-center text-amber-400 text-xl shrink-0">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-white"><span id="next-land-name">땅 2</span> 구매</div>
+                            <div class="text-xs text-amber-300">수확 효율: <span id="next-land-mult" class="font-bold">x3.5배</span></div>
+                            <div class="text-[11px] text-neutral-400">새 땅을 사면 일꾼 1명과 콩나무가 기본 제공됩니다!</div>
+                        </div>
+                    </div>
+                    <button id="buy-land-btn" onclick="buyNextLand()" class="pixel-btn-white px-4 py-2 text-xs rounded font-bold w-full sm:w-auto whitespace-nowrap">
+                        구매 (₩<span id="next-land-cost">500</span>)
+                    </button>
+                </div>
+
+                <!-- 1. Hire Worker -->
+                <div class="border border-white bg-neutral-950 p-3 rounded flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <div class="w-10 h-10 border border-white bg-black flex items-center justify-center text-white text-xl shrink-0">
+                            <i class="fa-solid fa-user-group"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-white">현재 땅 일꾼 고용 <span class="text-xs text-neutral-400">(최대 25명)</span></div>
+                            <div class="text-xs text-neutral-300">보유 일꾼: <span id="worker-count" class="text-white font-bold">1 / 25명</span></div>
+                            <div class="text-[11px] text-neutral-400">땅 위를 오가며 콩나무를 수확합니다.</div>
+                        </div>
+                    </div>
+                    <button id="buy-worker-btn" onclick="hireWorker()" class="pixel-btn-mono px-4 py-2 text-xs rounded font-bold w-full sm:w-auto whitespace-nowrap">
+                        고용 (₩<span id="worker-cost">15</span>)
+                    </button>
+                </div>
+
+                <!-- 2. Increase Work Yield -->
+                <div class="border border-white bg-neutral-950 p-3 rounded flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <div class="w-10 h-10 border border-white bg-black flex items-center justify-center text-white text-xl shrink-0">
+                            <i class="fa-solid fa-coins"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-white">수확량 강화 <span id="yield-lvl" class="text-neutral-400">Lv.1</span></div>
+                            <div class="text-xs text-neutral-300">1회 수확금액: <span id="yield-val" class="text-white">₩1</span></div>
+                            <div class="text-[11px] text-neutral-400">현재 땅의 일꾼이 일할 때마다 얻는 골드가 늘어납니다.</div>
+                        </div>
+                    </div>
+                    <button id="upg-yield-btn" onclick="upgradeWorkerYield()" class="pixel-btn-mono px-4 py-2 text-xs rounded font-bold w-full sm:w-auto whitespace-nowrap">
+                        강화 (₩<span id="yield-cost">30</span>)
+                    </button>
+                </div>
+
+                <!-- 3. Increase Work Speed -->
+                <div class="border border-white bg-neutral-950 p-3 rounded flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <div class="w-10 h-10 border border-white bg-black flex items-center justify-center text-white text-xl shrink-0">
+                            <i class="fa-solid fa-person-running"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-white">작업 속도 강화 <span id="spd-lvl" class="text-neutral-400">Lv.1</span></div>
+                            <div class="text-xs text-neutral-300">작업 주기: <span id="spd-val" class="text-white">1.00초</span></div>
+                            <div class="text-[11px] text-neutral-400">현재 땅 일꾼들의 작업 속도가 빨라집니다 (최대 0.15초).</div>
+                        </div>
+                    </div>
+                    <button id="upg-speed-btn" onclick="upgradeWorkerSpeed()" class="pixel-btn-mono px-4 py-2 text-xs rounded font-bold w-full sm:w-auto whitespace-nowrap">
+                        강화 (₩<span id="spd-cost">25</span>)
+                    </button>
+                </div>
+
+                <!-- Reset Data Button -->
+                <div class="text-center pt-3 border-t border-neutral-900">
+                    <button onclick="confirmReset()" class="text-xs text-neutral-500 hover:text-white underline">
+                        <i class="fa-solid fa-trash-can"></i> 모든 데이터 초기화
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert/Confirm Modal -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 hidden">
+        <div class="pixel-box-mono bg-black border-2 border-white rounded max-w-md w-full p-5 text-center space-y-4">
+            <h3 id="modal-title" class="text-lg font-bold text-white">알림</h3>
+            <p id="modal-body" class="text-xs text-neutral-300 leading-relaxed">내용</p>
+            <div id="modal-actions" class="flex justify-center gap-3 pt-2">
+                <button onclick="closeModal()" class="pixel-btn-white px-5 py-2 rounded text-xs">
+                    확인
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let soundEnabled = true;
+        let audioCtx = null;
+        let bgmInterval = null;
+        let bgmStep = 0;
+
+        // 8-bit Bright Retro BGM Note Frequencies (Clear C5-C6 Octaves)
+        const bgmNotes = [
+            523.25, 659.25, 783.99, 1046.50, 783.99, 659.25,
+            587.33, 698.46, 880.00, 1174.66, 880.00, 698.46,
+            659.25, 783.99, 987.77, 1318.51, 987.77, 783.99,
+            523.25, 659.25, 783.99, 1046.50, 880.00, 659.25
+        ];
+        const bgmBass = [
+            261.63, 261.63, 349.23, 349.23,
+            392.00, 392.00, 329.63, 329.63
+        ];
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
+            }
+        }
+
+        function ensureAudioContext() {
+            initAudio();
+            if (!audioCtx) return;
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => {
+                    if (soundEnabled && !bgmInterval) {
+                        startBGM();
+                    }
+                }).catch(() => {});
+            } else if (audioCtx.state === 'running' && soundEnabled && !bgmInterval) {
+                startBGM();
+            }
+        }
+
+        function playBGMStep() {
+            if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
+            const now = audioCtx.currentTime;
+
+            // Main Melody Synth (Square Wave - High & Clear Volume)
+            const noteFreq = bgmNotes[bgmStep % bgmNotes.length];
+            if (noteFreq) {
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(noteFreq, now);
+                    
+                    // Volume boosted from 0.02 to 0.08 for rich phone speaker output
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.15);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.16);
+                } catch (e) {}
+            }
+
+            // Bass Rhythm Synth (Triangle Wave)
+            if (bgmStep % 2 === 0) {
+                const bassFreq = bgmBass[Math.floor(bgmStep / 2) % bgmBass.length];
+                try {
+                    const oscB = audioCtx.createOscillator();
+                    const gainB = audioCtx.createGain();
+                    oscB.type = 'triangle';
+                    oscB.frequency.setValueAtTime(bassFreq, now);
+                    
+                    // Volume boosted to 0.10
+                    gainB.gain.setValueAtTime(0.10, now);
+                    gainB.gain.linearRampToValueAtTime(0.001, now + 0.28);
+                    
+                    oscB.connect(gainB);
+                    gainB.connect(audioCtx.destination);
+                    oscB.start(now);
+                    oscB.stop(now + 0.30);
+                } catch (e) {}
+            }
+
+            bgmStep++;
+        }
+
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
+
+        function startBGM() {
+            stopBGM();
+            if (!soundEnabled) return;
+            bgmStep = 0;
+            bgmInterval = setInterval(playBGMStep, 180);
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            ensureAudioContext();
+            if (!audioCtx || audioCtx.state !== 'running') return;
+
+            try {
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.linearRampToValueAtTime(800, now + 0.06);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.06);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                } else if (type === 'crunch') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.setValueAtTime(600, now + 0.04);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.07);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.07);
+                } else if (type === 'upgrade') {
+                    const freqs = [523.25, 659.25, 783.99, 1046.50];
+                    freqs.forEach((f, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'sine';
+                        o.frequency.setValueAtTime(f, now + idx * 0.05);
+                        g.gain.setValueAtTime(0.18, now + idx * 0.05);
+                        g.gain.linearRampToValueAtTime(0.01, now + idx * 0.05 + 0.1);
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.start(now + idx * 0.05);
+                        o.stop(now + idx * 0.05 + 0.1);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            const label = document.getElementById('sound-label');
+            if (icon) icon.className = soundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+            if (label) label.innerText = soundEnabled ? 'BGM ON' : 'BGM OFF';
+            
+            if (soundEnabled) {
+                ensureAudioContext();
+                startBGM();
+            } else {
+                stopBGM();
+            }
+        }
+
+        function handleFirstInteraction() {
+            ensureAudioContext();
+        }
+
+        ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
+            window.addEventListener(evt, handleFirstInteraction, { passive: true });
+        });
+
+        // Configuration for Lands (Stage System)
+        function getLandInfo(landIndex) {
+            const id = landIndex + 1;
+            if (landIndex === 0) {
+                return { id: 1, name: '땅 1', cost: 0, multiplier: 1.0 };
+            }
+            // 땅 구매 가격 대폭 인상 (땅 2: 5,000 / 땅 3: 200,000 / 땅 4: 15,000,000 / 땅 5: 1,200,000,000)
+            const cost = Math.floor(5000 * Math.pow(40, landIndex - 1));
+            // 땅별 수확 효율 배율 (단계가 올라갈수록 4.5배씩 증가)
+            const multiplier = Math.max(1, parseFloat(Math.pow(4.5, landIndex).toFixed(1)));
+            return {
+                id: id,
+                name: `땅 ${id}`,
+                cost: cost,
+                multiplier: multiplier
+            };
+        }
+
+        // Global Game State (Multi-Land Support)
+        const gameState = {
+            gold: 10,
+            totalGold: 10,
+            currentLandIndex: 0,
+            lands: [
+                {
+                    id: 1,
+                    workerCount: 1,
+                    workerYieldLevel: 1,
+                    workerSpeedLevel: 1,
+                    totalLandGold: 0
+                }
+            ],
+            lastSaveTime: Date.now()
+        };
+
+        function getCurrentLandData() {
+            if (!gameState.lands[gameState.currentLandIndex]) {
+                gameState.currentLandIndex = 0;
+            }
+            return gameState.lands[gameState.currentLandIndex];
+        }
+
+        function sanitizeGameState() {
+            if (!Number.isFinite(gameState.gold) || gameState.gold < 0) gameState.gold = 10;
+            if (!Number.isFinite(gameState.totalGold) || gameState.totalGold < 0) gameState.totalGold = gameState.gold;
+            
+            if (!Array.isArray(gameState.lands) || gameState.lands.length === 0) {
+                gameState.lands = [{ id: 1, workerCount: 1, workerYieldLevel: 1, workerSpeedLevel: 1, totalLandGold: 0 }];
+            }
+
+            if (!Number.isInteger(gameState.currentLandIndex) || gameState.currentLandIndex < 0) {
+                gameState.currentLandIndex = 0;
+            }
+            if (gameState.currentLandIndex >= gameState.lands.length) {
+                gameState.currentLandIndex = gameState.lands.length - 1;
+            }
+
+            gameState.lands.forEach((land, idx) => {
+                land.id = idx + 1;
+                if (!Number.isFinite(land.workerCount) || land.workerCount < 1) land.workerCount = 1;
+                if (land.workerCount > 25) land.workerCount = 25;
+                if (!Number.isFinite(land.workerYieldLevel) || land.workerYieldLevel < 1) land.workerYieldLevel = 1;
+                if (!Number.isFinite(land.workerSpeedLevel) || land.workerSpeedLevel < 1) land.workerSpeedLevel = 1;
+                if (land.workerSpeedLevel > 18) land.workerSpeedLevel = 18;
+                if (!Number.isFinite(land.totalLandGold) || land.totalLandGold < 0) land.totalLandGold = 0;
+            });
+
+            if (gameState.lands.length > 5) {
+                gameState.lands = gameState.lands.slice(0, 5);
+            }
+        }
+
+        let buyMultiplier = 1;
+
+        function setBuyMultiplier(mult) {
+            buyMultiplier = mult;
+            ['x1', 'x10', 'max'].forEach(m => {
+                const btn = document.getElementById(`buy-${m}`);
+                if (btn) {
+                    btn.className = (m === String(mult)) 
+                        ? 'pixel-btn-white px-2.5 py-1 text-[11px] rounded' 
+                        : 'pixel-btn-mono px-2.5 py-1 text-[11px] rounded';
+                }
+            });
+            updateUI();
+        }
+
+        function getCostForLevel(baseCost, factor, currentLevel, mult, maxLevel = 999) {
+            currentLevel = Math.max(1, currentLevel || 1);
+            if (currentLevel >= maxLevel) {
+                return { cost: 0, count: 0 };
+            }
+
+            if (mult === 'max') {
+                const effectiveMax = Math.min(maxLevel, currentLevel + 100);
+                let totalCost = 0;
+                let count = 0;
+                
+                for (let i = 0; i < (effectiveMax - currentLevel); i++) {
+                    let nextCost = Math.floor(baseCost * Math.pow(factor, currentLevel + i));
+                    if (gameState.gold >= totalCost + nextCost) {
+                        totalCost += nextCost;
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                if (count === 0) {
+                    return { cost: Math.floor(baseCost * Math.pow(factor, currentLevel)), count: 1 };
+                }
+                return { cost: Math.max(1, totalCost), count: Math.max(1, count) };
+            } else {
+                let available = Math.min(mult, maxLevel - currentLevel);
+                if (available <= 0) return { cost: 0, count: 0 };
+                
+                let totalCost = 0;
+                for (let i = 0; i < available; i++) {
+                    totalCost += Math.floor(baseCost * Math.pow(factor, currentLevel + i));
+                }
+                return { cost: Math.max(1, totalCost), count: available };
+            }
+        }
+
+        function getWorkerCost(land) {
+            const targetLand = land || getCurrentLandData();
+            const landIdx = targetLand.id - 1;
+            // 땅 번호가 클수록 고용 기본 비용 대폭 증가 (땅 단계당 12배)
+            const baseCost = Math.floor(15 * Math.pow(12, landIdx));
+            return getCostForLevel(baseCost, 1.15, targetLand.workerCount, buyMultiplier, 25);
+        }
+
+        function getYieldCost(land) { 
+            const targetLand = land || getCurrentLandData();
+            const landIdx = targetLand.id - 1;
+            // 땅 번호가 클수록 수확량 강화 기본 비용 대폭 증가 (땅 단계당 12배)
+            const baseCost = Math.floor(30 * Math.pow(12, landIdx));
+            return getCostForLevel(baseCost, 1.20, targetLand.workerYieldLevel, buyMultiplier, 999); 
+        }
+
+        function getSpeedCost(land) {
+            const targetLand = land || getCurrentLandData();
+            const landIdx = targetLand.id - 1;
+            // 땅 번호가 클수록 속도 강화 기본 비용 대폭 증가 (땅 단계당 12배)
+            const baseCost = Math.floor(25 * Math.pow(12, landIdx));
+            return getCostForLevel(baseCost, 1.25, targetLand.workerSpeedLevel, buyMultiplier, 18);
+        }
+
+        function getSingleWorkerHarvestYield(land) {
+            const landData = land || getCurrentLandData();
+            const landInfo = getLandInfo(landData.id - 1);
+            return Math.floor(landData.workerYieldLevel * landInfo.multiplier);
+        }
+
+        function getLandGPS(land) {
+            const speedSec = Math.max(0.15, 1.0 - (land.workerSpeedLevel - 1) * 0.05);
+            const harvestsPerSec = 1 / speedSec;
+            return land.workerCount * getSingleWorkerHarvestYield(land) * harvestsPerSec;
+        }
+
+        function getTotalGoldPerSecond() {
+            let total = 0;
+            gameState.lands.forEach(land => {
+                total += getLandGPS(land);
+            });
+            return total;
+        }
+
+        function getBeanstalkHeight(land) {
+            const landData = land || getCurrentLandData();
+            const total = Number.isFinite(landData.totalLandGold) ? landData.totalLandGold : 0;
+            if (total <= 10) return 1;
+            const h = Math.floor(1 + Math.log10(total / 10 + 1) * 12);
+            return Number.isFinite(h) && h > 0 ? h : 1;
+        }
+
+        const activeWorkers = [];
+        function syncActiveWorkers() {
+            const currentLand = getCurrentLandData();
+            while (activeWorkers.length < currentLand.workerCount) {
+                activeWorkers.push(new PixelWorker(activeWorkers.length));
+            }
+            while (activeWorkers.length > currentLand.workerCount) {
+                activeWorkers.pop();
+            }
+        }
+
+        const clouds = [
+            { x: 50, y: 70, speed: 0.15, size: 1.2 },
+            { x: 300, y: 120, speed: 0.1, size: 0.9 },
+            { x: 600, y: 50, speed: 0.2, size: 1.5 },
+            { x: 900, y: 140, speed: 0.12, size: 1.0 }
+        ];
+
+        const floatingParticles = [];
+
+        function spawnParticle(x, y, text, color = '#ffffff') {
+            floatingParticles.push({
+                x: x,
+                y: y,
+                text: text,
+                color: color,
+                alpha: 1.0,
+                vy: -1.2
+            });
+        }
+
+        function updateAndDrawParticles(ctx) {
+            for (let i = floatingParticles.length - 1; i >= 0; i--) {
+                const p = floatingParticles[i];
+                p.y += p.vy;
+                p.alpha -= 0.022;
+
+                if (p.alpha <= 0) {
+                    floatingParticles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.alpha);
+                ctx.fillStyle = p.color;
+                ctx.font = 'bold 16px "DungGeunMo", monospace';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = '#000000';
+                ctx.shadowBlur = 4;
+                ctx.fillText(p.text, p.x, p.y);
+                ctx.restore();
+            }
+        }
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        function resizeCanvas() {
+            const w = Math.floor(window.innerWidth || document.documentElement.clientWidth || 360);
+            const h = Math.floor(window.innerHeight || document.documentElement.clientHeight || 640);
+            
+            if (Math.abs(canvas.width - w) > 1 || Math.abs(canvas.height - h) > 1) {
+                canvas.width = w;
+                canvas.height = h;
+                ctx.imageSmoothingEnabled = false;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class PixelWorker {
+            constructor(id) {
+                this.id = id;
+                const w = canvas.width || 360;
+                this.x = Math.max(40, Math.min(w - 40, w / 2 + (Math.random() * 200 - 100)));
+                this.direction = Math.random() > 0.5 ? 1 : -1;
+                this.speed = 0.5 + Math.random() * 0.3;
+                this.isHarvesting = false;
+                this.actionTimer = 0;
+                this.shirtColor = ['#10b981', '#059669', '#047857', '#34d399', '#f59e0b'][id % 5];
+                this.hatColor = ['#78350f', '#15803d', '#1e293b', '#b91c1c', '#065f46'][id % 5];
+            }
+
+            update(canvasWidth, canvasHeight) {
+                const currentLand = getCurrentLandData();
+                const spdMult = 1 + (currentLand.workerSpeedLevel - 1) * 0.1;
+                const groundY = canvasHeight - 52;
+
+                if (!this.isHarvesting) {
+                    this.x += this.direction * this.speed * spdMult * 0.8;
+                    
+                    if (this.x <= 40) {
+                        this.x = 40;
+                        this.direction = 1;
+                    } else if (this.x >= canvasWidth - 40) {
+                        this.x = canvasWidth - 40;
+                        this.direction = -1;
+                    }
+
+                    const distToCenter = Math.abs(this.x - canvasWidth / 2);
+                    if ((distToCenter < 120 && Math.random() < 0.05) || Math.random() < 0.008) {
+                        this.isHarvesting = true;
+                        this.actionTimer = Math.max(10, Math.floor(30 / spdMult));
+                    }
+                } else {
+                    this.actionTimer--;
+                    if (this.actionTimer <= 0) {
+                        this.isHarvesting = false;
+                        harvestFromWorker(this.x, groundY - 20);
+                        this.direction = Math.random() > 0.5 ? 1 : -1;
+                    }
+                }
+            }
+
+            draw(ctx, canvasHeight) {
+                const groundY = canvasHeight - 52;
+
+                ctx.save();
+                ctx.translate(Math.floor(this.x), Math.floor(groundY));
+
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(-8, 12, 16, 4);
+
+                const legAnim = this.isHarvesting ? 0 : Math.sin(Date.now() * 0.01 * this.speed) * 2;
+                ctx.fillStyle = '#171717';
+                ctx.fillRect(-5, 4, 3, 9 + legAnim);
+                ctx.fillRect(2, 4, 3, 9 - legAnim);
+
+                ctx.fillStyle = this.shirtColor;
+                ctx.fillRect(-6, -6, 12, 10);
+
+                ctx.fillStyle = '#fde047';
+                ctx.fillRect(-5, -15, 10, 9);
+
+                ctx.fillStyle = this.hatColor;
+                ctx.fillRect(-7, -18, 14, 4);
+
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.direction > 0 ? 2 : -4, -12, 2, 2);
+
+                if (this.isHarvesting) {
+                    ctx.fillStyle = '#22c55e';
+                    ctx.fillRect(7 * this.direction, -4, 8, 8);
+                }
+
+                ctx.restore();
+            }
+        }
+
+        function addGold(amount, landData = null) {
+            if (!Number.isFinite(amount) || amount <= 0) return;
+            gameState.gold += amount;
+            gameState.totalGold += amount;
+            
+            const targetLand = landData || getCurrentLandData();
+            if (targetLand) {
+                targetLand.totalLandGold += amount;
+            }
+            updateUI();
+        }
+
+        function harvestFromWorker(x, y) {
+            const currentLand = getCurrentLandData();
+            const amount = getSingleWorkerHarvestYield(currentLand);
+            addGold(amount, currentLand);
+            spawnParticle(x, y, `+₩${formatNumber(amount)}`, '#4ade80');
+            playSound('crunch');
+        }
+
+        function handleInteraction(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = clientX - rect.left;
+            const clickY = clientY - rect.top;
+            
+            const currentLand = getCurrentLandData();
+            const yieldVal = getSingleWorkerHarvestYield(currentLand);
+            addGold(yieldVal, currentLand);
+            spawnParticle(clickX, clickY, `+₩${formatNumber(yieldVal)}`, '#ffffff');
+            playSound('click');
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            handleInteraction(e.clientX, e.clientY);
+        });
+
+        function drawBackgroundAndClouds(ctx, w, h) {
+            const currentLand = getCurrentLandData();
+            const heightLevel = getBeanstalkHeight(currentLand);
+            const groundY = h - 52;
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, w, h);
+
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, Math.max(1, groundY));
+            if (heightLevel < 25) {
+                skyGrad.addColorStop(0, '#1e3a8a');
+                skyGrad.addColorStop(0.6, '#38bdf8');
+                skyGrad.addColorStop(1, '#bae6fd');
+            } else if (heightLevel < 60) {
+                skyGrad.addColorStop(0, '#31104b');
+                skyGrad.addColorStop(0.5, '#7c2d12');
+                skyGrad.addColorStop(1, '#f59e0b');
+            } else {
+                skyGrad.addColorStop(0, '#030712');
+                skyGrad.addColorStop(0.7, '#090d16');
+                skyGrad.addColorStop(1, '#1e1b4b');
+            }
+            
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, w, groundY);
+
+            if (heightLevel >= 40) {
+                ctx.fillStyle = '#ffffff';
+                for (let i = 0; i < 30; i++) {
+                    const sx = (i * 47) % w;
+                    const sy = (i * 29) % Math.max(1, groundY - 100);
+                    ctx.fillRect(sx, sy, 2, 2);
+                }
+            }
+
+            ctx.fillStyle = '#ffffff';
+            clouds.forEach(cloud => {
+                cloud.x += cloud.speed;
+                if (cloud.x > w + 100) cloud.x = -120;
+                drawPixelCloud(ctx, cloud.x, cloud.y, cloud.size);
+            });
+
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(0, groundY, w, 52);
+
+            ctx.fillStyle = '#15803d';
+            ctx.fillRect(0, groundY, w, 12);
+
+            ctx.fillStyle = '#22c55e';
+            for (let x = 0; x < w; x += 16) {
+                ctx.fillRect(x, groundY - 6, 8, 6);
+            }
+        }
+
+        function drawPixelCloud(ctx, x, y, scale = 1) {
+            ctx.save();
+            ctx.translate(Math.floor(x), Math.floor(y));
+            ctx.scale(scale, scale);
+            ctx.fillRect(0, 0, 60, 16);
+            ctx.fillRect(10, -10, 40, 10);
+            ctx.restore();
+        }
+
+        function drawSmoothBeanstalk(ctx, w, h) {
+            ctx.save();
+            const centerX = Math.floor(w / 2);
+            const groundY = h - 52;
+            const currentLand = getCurrentLandData();
+            const heightLevel = getBeanstalkHeight(currentLand);
+
+            const maxLevel = 80;
+            const progressRatio = Math.min(1.0, (heightLevel - 1) / (maxLevel - 1));
+
+            const minPixelHeight = 35;
+            const maxPixelHeight = h + 150;
+            const targetPixelHeight = Math.min(maxPixelHeight, minPixelHeight + (heightLevel - 1) * 12);
+
+            const minRootThickness = 22;
+            const maxRootThickness = Math.max(100, Math.floor(w * 0.32));
+            const rootThickness = Math.floor(minRootThickness + (maxRootThickness - minRootThickness) * progressRatio);
+
+            const segmentHeight = 8;
+            const segments = Math.max(2, Math.floor(targetPixelHeight / segmentHeight));
+
+            let topCenterX = centerX;
+            let topY = groundY;
+            let topSegThickness = rootThickness;
+
+            for (let i = 0; i < segments; i++) {
+                const segY = groundY - (i * segmentHeight);
+
+                const curveOffset = Math.sin(i * 0.08) * (w * 0.05 * progressRatio);
+                const segCenterX = Math.floor(centerX + curveOffset);
+
+                const progress = i / Math.max(1, segments - 1);
+                const segThickness = Math.max(12, Math.floor(rootThickness * (1 - progress * 0.5)));
+
+                if (i === segments - 1) {
+                    topCenterX = segCenterX;
+                    topY = segY - segmentHeight;
+                    topSegThickness = segThickness;
+                }
+
+                ctx.fillStyle = (i % 2 === 0) ? '#15803d' : '#166534';
+                ctx.fillRect(segCenterX - Math.floor(segThickness / 2), segY - segmentHeight, segThickness, segmentHeight + 1);
+
+                const edgeWidth = Math.max(3, Math.floor(segThickness * 0.12));
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(segCenterX - Math.floor(segThickness / 2) + 2, segY - segmentHeight, edgeWidth, segmentHeight + 1);
+
+                ctx.fillStyle = '#052e16';
+                ctx.fillRect(segCenterX + Math.floor(segThickness / 2) - edgeWidth, segY - segmentHeight, edgeWidth, segmentHeight + 1);
+
+                if (i > 0 && i % 4 === 0) {
+                    const isLeft = (i % 8 === 0);
+                    const leafWidth = Math.min(40, Math.max(10, Math.floor(segThickness * 0.4)));
+                    const leafX = isLeft ? segCenterX - Math.floor(segThickness / 2) - leafWidth : segCenterX + Math.floor(segThickness / 2);
+                    
+                    ctx.fillStyle = '#22c55e';
+                    ctx.fillRect(leafX, segY - 8, leafWidth, 8);
+                }
+            }
+
+            if (targetPixelHeight < maxPixelHeight && Number.isFinite(topY) && Number.isFinite(topSegThickness)) {
+                drawCurvedConeTip(ctx, topCenterX, topY, topSegThickness, segments, w, progressRatio);
+            }
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 14px "DungGeunMo", monospace';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#000000';
+            ctx.shadowBlur = 4;
+            const hudY = (targetPixelHeight < maxPixelHeight && Number.isFinite(topY)) ? Math.max(40, topY - 30) : 80;
+            ctx.fillText(`[땅 ${currentLand.id} 콩나무 높이: ${heightLevel}m]`, centerX, hudY);
+
+            ctx.restore();
+        }
+
+        function drawCurvedConeTip(ctx, startX, startY, baseThickness, startSegmentIndex, w, progressRatio) {
+            ctx.save();
+            const tipSteps = Math.max(10, Math.floor(baseThickness * 0.8));
+            const stepHeight = 3;
+
+            for (let step = 0; step < tipSteps; step++) {
+                const t = step / tipSteps;
+                const virtualSegment = startSegmentIndex + (step * stepHeight / 8);
+                const curveOffset = Math.sin(virtualSegment * 0.08) * (w * 0.05 * progressRatio);
+                const segCenterX = Math.floor(w / 2 + curveOffset);
+                const segY = Math.floor(startY - (step * stepHeight));
+                const currentThickness = Math.max(2, Math.floor(baseThickness * Math.pow(1 - t, 1.3)));
+
+                ctx.fillStyle = (step % 2 === 0) ? '#15803d' : '#22c55e';
+                ctx.fillRect(segCenterX - Math.floor(currentThickness / 2), segY - stepHeight, currentThickness, stepHeight + 1);
+            }
+            ctx.restore();
+        }
+
+        function prevLand() {
+            if (gameState.currentLandIndex > 0) {
+                gameState.currentLandIndex--;
+                syncActiveWorkers();
+                playSound('click');
+                updateUI();
+            }
+        }
+
+        function nextLand() {
+            if (gameState.currentLandIndex < gameState.lands.length - 1) {
+                gameState.currentLandIndex++;
+                syncActiveWorkers();
+                playSound('click');
+                updateUI();
+            }
+        }
+
+        function buyNextLand() {
+            if (gameState.lands.length >= 5) {
+                openModal("구매 제한", "땅은 최대 5개까지만 보유할 수 있습니다.");
+                return;
+            }
+            const nextLandIndex = gameState.lands.length;
+            const nextInfo = getLandInfo(nextLandIndex);
+            
+            if (gameState.gold >= nextInfo.cost) {
+                gameState.gold -= nextInfo.cost;
+                gameState.lands.push({
+                    id: nextLandIndex + 1,
+                    workerCount: 1,
+                    workerYieldLevel: 1,
+                    workerSpeedLevel: 1,
+                    totalLandGold: 0
+                });
+                gameState.currentLandIndex = nextLandIndex;
+                
+                syncActiveWorkers();
+                playSound('upgrade');
+                openModal("땅 구매 성공!", `${nextInfo.name}을(를) 새로 구매했습니다!<br>수확 효율 <b>x${nextInfo.multiplier}배</b>가 적용됩니다.`);
+                updateUI();
+            }
+        }
+
+        function hireWorker() {
+            const currentLand = getCurrentLandData();
+            if (currentLand.workerCount >= 25) return;
+            const { cost, count } = getWorkerCost(currentLand);
+            if (count > 0 && gameState.gold >= cost) {
+                gameState.gold -= cost;
+                currentLand.workerCount += count;
+                if (currentLand.workerCount > 25) currentLand.workerCount = 25;
+                
+                syncActiveWorkers();
+                playSound('upgrade');
+                updateUI();
+            }
+        }
+
+        function upgradeWorkerYield() {
+            const currentLand = getCurrentLandData();
+            const { cost, count } = getYieldCost(currentLand);
+            if (gameState.gold >= cost) {
+                gameState.gold -= cost;
+                currentLand.workerYieldLevel += count;
+                playSound('upgrade');
+                updateUI();
+            }
+        }
+
+        function upgradeWorkerSpeed() {
+            const currentLand = getCurrentLandData();
+            if (currentLand.workerSpeedLevel >= 18) return;
+            const { cost, count } = getSpeedCost(currentLand);
+            if (count > 0 && gameState.gold >= cost) {
+                gameState.gold -= cost;
+                currentLand.workerSpeedLevel += count;
+                if (currentLand.workerSpeedLevel >= 18) currentLand.workerSpeedLevel = 18;
+                playSound('upgrade');
+                updateUI();
+            }
+        }
+
+        function openShop() {
+            ensureAudioContext();
+            playSound('click');
+            document.getElementById('shop-modal').classList.remove('hidden');
+            updateUI();
+        }
+
+        function closeShop() {
+            document.getElementById('shop-modal').classList.add('hidden');
+        }
+
+        function openModal(title, text) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = text;
+            const container = document.getElementById('modal-actions');
+            container.innerHTML = '';
+
+            const okBtn = document.createElement('button');
+            okBtn.className = 'pixel-btn-white px-5 py-2 rounded text-xs';
+            okBtn.innerText = '확인';
+            okBtn.onclick = closeModal;
+            container.appendChild(okBtn);
+
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
+
+        function confirmReset() {
+            openModal("전체 데이터 초기화", "모든 세이브 데이터 및 구매한 땅이 삭제됩니다. 진행할까요?");
+            localStorage.removeItem('zec_beanstalk_v3_save');
+            setTimeout(() => location.reload(), 1000);
+        }
+
+        function formatNumber(num) {
+            if (!Number.isFinite(num) || num < 0) return '0';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+            return Math.floor(num).toLocaleString();
+        }
+
+        function updateUI() {
+            sanitizeGameState();
+            const currentLand = getCurrentLandData();
+            const currentLandInfo = getLandInfo(gameState.currentLandIndex);
+
+            // Update Header Stats
+            document.getElementById('gold-display').innerText = `₩${formatNumber(gameState.gold)}`;
+            document.getElementById('gps-display').innerText = `+₩${formatNumber(getTotalGoldPerSecond())}/초`;
+
+            // Update Land Switcher Bar
+            document.getElementById('current-land-title').innerText = `${currentLandInfo.name} (x${currentLandInfo.multiplier} 효율)`;
+            document.getElementById('land-gps-sub').innerText = `현재 땅 생산: +₩${formatNumber(getLandGPS(currentLand))}/초`;
+            
+            const prevBtn = document.getElementById('prev-land-btn');
+            const nextBtn = document.getElementById('next-land-btn');
+            if (prevBtn) prevBtn.disabled = gameState.currentLandIndex <= 0;
+            if (nextBtn) nextBtn.disabled = gameState.currentLandIndex >= gameState.lands.length - 1;
+
+            const shopModal = document.getElementById('shop-modal');
+            if (shopModal && shopModal.classList.contains('hidden')) {
+                return;
+            }
+
+            // Shop UI Updates
+            document.getElementById('active-land-badge').innerText = `[${currentLandInfo.name} 관리 중]`;
+
+            // Next Land Purchase Info in Shop
+            const nextLandIdx = gameState.lands.length;
+            const buyLandBtn = document.getElementById('buy-land-btn');
+            const nextLandNameEl = document.getElementById('next-land-name');
+            const nextLandMultEl = document.getElementById('next-land-mult');
+            const nextLandCostEl = document.getElementById('next-land-cost');
+
+            if (nextLandIdx >= 5) {
+                if (nextLandNameEl) nextLandNameEl.innerText = "땅 확장 완료 (최대 5개)";
+                if (nextLandMultEl) nextLandMultEl.innerText = "MAX";
+                if (nextLandCostEl) nextLandCostEl.innerText = "0";
+                if (buyLandBtn) {
+                    buyLandBtn.innerText = "최대 보유 완료 (5/5)";
+                    buyLandBtn.disabled = true;
+                }
+            } else {
+                const nextLandInfo = getLandInfo(nextLandIdx);
+                if (nextLandNameEl) nextLandNameEl.innerText = nextLandInfo.name;
+                if (nextLandMultEl) nextLandMultEl.innerText = `x${nextLandInfo.multiplier}배`;
+                if (nextLandCostEl) nextLandCostEl.innerText = formatNumber(nextLandInfo.cost);
+                if (buyLandBtn) {
+                    buyLandBtn.innerHTML = `구매 (₩<span id="next-land-cost">${formatNumber(nextLandInfo.cost)}</span>)`;
+                    buyLandBtn.disabled = gameState.gold < nextLandInfo.cost;
+                }
+            }
+
+            // Worker Hire
+            const wCost = getWorkerCost(currentLand);
+            document.getElementById('worker-count').innerText = `${currentLand.workerCount} / 25명`;
+            const buyWorkerBtn = document.getElementById('buy-worker-btn');
+            
+            if (currentLand.workerCount >= 25) {
+                buyWorkerBtn.innerText = '최대 고용 완료 (25/25)';
+                buyWorkerBtn.disabled = true;
+            } else {
+                buyWorkerBtn.innerHTML = `고용 (₩<span id="worker-cost">${formatNumber(wCost.cost)}</span>)`;
+                buyWorkerBtn.disabled = gameState.gold < wCost.cost;
+            }
+
+            // Yield Upgrade
+            const yieldCost = getYieldCost(currentLand);
+            document.getElementById('yield-lvl').innerText = `Lv.${currentLand.workerYieldLevel}`;
+            document.getElementById('yield-val').innerText = `₩${formatNumber(getSingleWorkerHarvestYield(currentLand))}`;
+            const yieldCostEl = document.getElementById('yield-cost');
+            if (yieldCostEl) yieldCostEl.innerText = formatNumber(yieldCost.cost);
+            const upgYieldBtn = document.getElementById('upg-yield-btn');
+            if (upgYieldBtn) upgYieldBtn.disabled = gameState.gold < yieldCost.cost;
+
+            // Speed Upgrade
+            const spdCost = getSpeedCost(currentLand);
+            document.getElementById('spd-lvl').innerText = `Lv.${currentLand.workerSpeedLevel}${currentLand.workerSpeedLevel >= 18 ? ' (MAX)' : ''}`;
+            document.getElementById('spd-val').innerText = `${Math.max(0.15, (1 - (currentLand.workerSpeedLevel - 1) * 0.05)).toFixed(2)}초`;
+            const upgSpeedBtn = document.getElementById('upg-speed-btn');
+            if (upgSpeedBtn) {
+                if (currentLand.workerSpeedLevel >= 18) {
+                    upgSpeedBtn.innerText = '최대 강화 완료 (0.15초)';
+                    upgSpeedBtn.disabled = true;
+                } else {
+                    upgSpeedBtn.innerHTML = `강화 (₩<span id="spd-cost">${formatNumber(spdCost.cost)}</span>)`;
+                    upgSpeedBtn.disabled = gameState.gold < spdCost.cost || spdCost.count === 0;
+                }
+            }
+        }
+
+        function saveGame() {
+            gameState.lastSaveTime = Date.now();
+            localStorage.setItem('zec_beanstalk_v3_save', JSON.stringify(gameState));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('zec_beanstalk_v3_save');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    Object.assign(gameState, parsed);
+                    sanitizeGameState();
+                } catch (e) {
+                    sanitizeGameState();
+                }
+            } else {
+                sanitizeGameState();
+            }
+        }
+
+        setInterval(() => saveGame(), 15000);
+
+        let lastAutoTick = Date.now();
+        function gameLoop() {
+            try {
+                const now = Date.now();
+                const delta = (now - lastAutoTick) / 1000;
+                if (delta >= 0.1) {
+                    // Accumulate offline/real-time income from all unlocked lands simultaneously
+                    gameState.lands.forEach(land => {
+                        const landGps = getLandGPS(land);
+                        const earned = landGps * delta;
+                        if (earned > 0) {
+                            addGold(earned, land);
+                        }
+                    });
+                    lastAutoTick = now;
+                }
+
+                drawBackgroundAndClouds(ctx, canvas.width, canvas.height);
+                drawSmoothBeanstalk(ctx, canvas.width, canvas.height);
+
+                activeWorkers.forEach(worker => {
+                    worker.update(canvas.width, canvas.height);
+                    worker.draw(ctx, canvas.height);
+                });
+
+                updateAndDrawParticles(ctx);
+            } catch (err) {
+                console.error("Game loop error:", err);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = function () {
+            resizeCanvas();
+            loadGame();
+            syncActiveWorkers();
+            updateUI();
+            gameLoop();
+        };
+    </script>
+</body>
+</html>
