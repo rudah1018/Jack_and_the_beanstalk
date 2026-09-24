@@ -708,6 +708,40 @@
                 activeWorkers.push(new PixelWorker(i));
             }
         }
+        let lastBackgroundCheckTime = Date.now();
+
+        // Handle Page Visibility changes to calculate elapsed time when switching back from another tab
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                // Save timestamp when leaving the tab
+                lastBackgroundCheckTime = Date.now();
+                saveGame();
+            } else {
+                // When returning to the tab, calculate elapsed time and credit offline/background earnings
+                const now = Date.now();
+                const elapsedSec = Math.floor((now - lastBackgroundCheckTime) / 1000);
+                if (elapsedSec > 1) {
+                    const totalGPS = getTotalGoldPerSecond();
+                    if (totalGPS > 0) {
+                        const backgroundGold = totalGPS * elapsedSec;
+                        gameState.gold += backgroundGold;
+                        gameState.totalGold += backgroundGold;
+
+                        gameState.lands.forEach(land => {
+                            let landGPS = getLandGPS(land);
+                            if (land.id === 6) landGPS += getGeeseGPS();
+                            land.totalLandGold += landGPS * elapsedSec;
+                        });
+
+                        setTimeout(() => {
+                            openModal("백그라운드 수입 정산", `다른 화면을 보는 동안 <b>${elapsedSec}초</b>가 흘렀습니다!<br>누적 수입: <b>₩${formatNumber(backgroundGold)}</b>`);
+                        }, 400);
+                    }
+                }
+                lastBackgroundCheckTime = now;
+                lastTimestamp = performance.now();
+            }
+        });
 
         class GoldenGoose {
             constructor(id) {
