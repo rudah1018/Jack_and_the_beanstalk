@@ -135,18 +135,12 @@
             </div>
 
             <!-- Action Controls & Shop Trigger -->
-    <div class="pointer-events-auto flex items-center gap-2">
-        <!-- Gacha Shop Button (Heaven Only) - Always rendered when in heaven -->
-        <button id="gacha-btn-header" onclick="openGachaModal()" class="pixel-btn-gold px-3 py-2.5 rounded text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-lg">
-            <i class="fa-solid fa-egg text-base"></i>
-            <span>거위 뽑기</span>
-        </button>
-
-        <!-- Open Shop Button -->
-        <button onclick="openShop()" class="pixel-btn-white px-4 py-2.5 rounded text-xs sm:text-sm font-black flex items-center gap-2 shadow-lg">
-            <i class="fa-solid fa-store text-base"></i>
-            <span>상점 (땅 & 강화)</span>
-        </button>
+            <div class="pointer-events-auto flex items-center gap-2">
+                <!-- Gacha Shop Button (Heaven Only) -->
+                <button id="gacha-btn-header" onclick="openGachaModal()" class="pixel-btn-gold px-3 py-2.5 rounded text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-lg hidden">
+                    <i class="fa-solid fa-egg text-base"></i>
+                    <span>거위 뽑기</span>
+                </button>
 
                 <!-- Open Shop Button -->
                 <button onclick="openShop()" class="pixel-btn-white px-4 py-2.5 rounded text-xs sm:text-sm font-black flex items-center gap-2 shadow-lg">
@@ -528,11 +522,13 @@
             const id = landIndex + 1;
             if (landIndex === 0) return { id: 1, name: '땅 1', cost: 0, multiplier: 1.0 };
             if (landIndex === 5) {
-                return { id: 6, name: '천국', cost: 0, multiplier: 850.0 }; // 상향된 천국 효율
+                return { id: 6, name: '천국', cost: 0, multiplier: 1200.0 }; // 천국 효율을 땅 5보다 확실히 높게 설정
             }
             
-            const cost = Math.floor(4000 * Math.pow(35, landIndex - 1));
-            const multiplier = Math.max(1, parseFloat(Math.pow(5.5, landIndex).toFixed(1))); // 전반적인 땅 효율 상향
+            const cost = Math.floor(4000 * Math.pow(30, landIndex - 1));
+            // 땅 4(index 3) 및 땅별 효율 대폭 상향 (땅 4: 95.0, 땅 5: 450.0, 천국: 1200.0)
+            const multipliers = [1.0, 4.0, 18.0, 95.0, 450.0];
+            const multiplier = multipliers[landIndex] || Math.max(1, parseFloat(Math.pow(6.5, landIndex).toFixed(1)));
             return {
                 id: id,
                 name: `땅 ${id}`,
@@ -676,8 +672,8 @@
         function getSingleWorkerHarvestYield(land) {
             const landData = land || getCurrentLandData();
             const landInfo = getLandInfo(landData.id === 6 ? 5 : landData.id - 1);
-            // 일꾼 기본 생산량 대폭 상향
-            return Math.floor(Math.max(1, landData.workerYieldLevel * 2) * landInfo.multiplier);
+            // 기본 생산량 및 레벨당 효율 대폭 상향
+            return Math.floor(Math.max(1, landData.workerYieldLevel * 3) * landInfo.multiplier);
         }
 
         function getLandGPS(land) {
@@ -1352,15 +1348,15 @@
             document.getElementById('gold-display').innerText = `₩${formatNumber(gameState.gold)}`;
             document.getElementById('gps-display').innerText = `+₩${formatNumber(getTotalGoldPerSecond())}/초`;
 
-            // 천국(Land 6) 화면일 때 거위 뽑기 버튼 무조건 강제 표시
+            // 천국(Land 6) 화면일 때만 거위 뽑기 버튼 노출 (상점 UI와 충돌 나지 않도록 구조 분리)
             const gachaHeaderBtn = document.getElementById('gacha-btn-header');
             if (gachaHeaderBtn) {
                 if (gameState.hasElevator && currentLand.id === 6) {
                     gachaHeaderBtn.classList.remove('hidden');
-                    gachaHeaderBtn.style.display = 'flex'; 
+                    gachaHeaderBtn.style.display = 'flex';
                 } else {
                     gachaHeaderBtn.classList.add('hidden');
-                    gachaHeaderBtn.style.display = 'none'; 
+                    gachaHeaderBtn.style.display = 'none';
                 }
             }
 
